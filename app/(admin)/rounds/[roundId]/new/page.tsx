@@ -22,7 +22,7 @@ export default function NewGroupsPage() {
   const [submitting, setSubmitting] = useState(false)
 
   async function handleParse() {
-    const parsed = parseSlots(text)
+    const parsed = await parseSlots(text)
     const res = await fetch('/api/users?role=facilitator')
     const { users } = await res.json()
     setFacilitators(users)
