@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createStudent, deleteStudent } from './actions'
+import BulkImport from './BulkImport'
 
 export default async function StudentsPage() {
   const supabase = await createClient()
@@ -12,6 +13,7 @@ export default async function StudentsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Students</h1>
+      <BulkImport />
       <div className="bg-white rounded-lg shadow mb-6 p-4">
         <h2 className="font-medium mb-3">Add Student</h2>
         <form action={createStudent} className="flex gap-3 flex-wrap">
