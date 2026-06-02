@@ -4,11 +4,10 @@ import { useState } from 'react'
 import { bulkImportFacilitators } from './actions'
 
 const DEFAULTS = [
-  { name: 'Michael Sloyer', email: 'michael@upbuild.com' },
-  { name: 'Vipin Goyal', email: 'vipin@upbuild.com' },
-  { name: 'Gina Kellogg', email: 'gina@upbuild.com' },
-  { name: 'Mary Kuentz', email: 'mary@upbuild.com' },
-  { name: 'Melissa Arthur', email: 'melissa@upbuild.com' },
+  { name: 'Vipin Goyal', email: 'vipin@upbuild.com', zoom_link: '' },
+  { name: 'Gina Kellogg', email: 'gina@upbuild.com', zoom_link: '' },
+  { name: 'Mary Kuentz', email: 'mary@upbuild.com', zoom_link: '' },
+  { name: 'Melissa Arthur', email: 'melissa@upbuild.com', zoom_link: '' },
 ]
 
 export default function SeedFacilitators({ existingCount }: { existingCount: number }) {
@@ -26,12 +25,12 @@ export default function SeedFacilitators({ existingCount }: { existingCount: num
     )
   }
 
-  function update(i: number, field: 'name' | 'email', value: string) {
+  function update(i: number, field: 'name' | 'email' | 'zoom_link', value: string) {
     setEntries(prev => prev.map((e, idx) => idx === i ? { ...e, [field]: value } : e))
   }
 
   function addRow() {
-    setEntries(prev => [...prev, { name: '', email: '' }])
+    setEntries(prev => [...prev, { name: '', email: '', zoom_link: '' }])
   }
 
   function removeRow(i: number) {
@@ -53,13 +52,14 @@ export default function SeedFacilitators({ existingCount }: { existingCount: num
         <h2 className="font-medium">Add Facilitators</h2>
         <button onClick={() => setOpen(false)} className="text-xs text-gray-400 hover:text-gray-600">Dismiss</button>
       </div>
-      <p className="text-xs text-gray-400 mb-3">Edit names and emails as needed, then click Import.</p>
+      <p className="text-xs text-gray-400 mb-3">Edit details as needed, then click Import. Michael Sloyer is already set up as admin/facilitator.</p>
       <div className="border rounded mb-3 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b bg-gray-50">
             <tr>
               <th className="text-left px-3 py-2 font-medium text-gray-600">Name</th>
               <th className="text-left px-3 py-2 font-medium text-gray-600">Email</th>
+              <th className="text-left px-3 py-2 font-medium text-gray-600">Zoom Link</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -72,6 +72,11 @@ export default function SeedFacilitators({ existingCount }: { existingCount: num
                 </td>
                 <td className="px-3 py-1.5">
                   <input value={e.email} onChange={ev => update(i, 'email', ev.target.value)}
+                    className="w-full border rounded px-2 py-1 text-sm" />
+                </td>
+                <td className="px-3 py-1.5">
+                  <input value={e.zoom_link} onChange={ev => update(i, 'zoom_link', ev.target.value)}
+                    placeholder="https://zoom.us/j/..."
                     className="w-full border rounded px-2 py-1 text-sm" />
                 </td>
                 <td className="px-3 py-1.5 whitespace-nowrap">

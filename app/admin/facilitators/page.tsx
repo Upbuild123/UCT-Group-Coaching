@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { createFacilitator, deleteFacilitator } from './actions'
+import { createFacilitator, deleteFacilitator, updateFacilitatorZoomLink } from './actions'
 import SeedFacilitators from './SeedFacilitators'
 
 export default async function FacilitatorsPage() {
@@ -11,7 +11,7 @@ export default async function FacilitatorsPage() {
     .order('name')
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-3xl">
       <h1 className="text-2xl font-bold mb-6">Facilitators</h1>
       <SeedFacilitators existingCount={facilitators?.length ?? 0} />
       <div className="bg-white rounded-lg shadow mb-6 p-4">
@@ -28,11 +28,12 @@ export default async function FacilitatorsPage() {
         </form>
       </div>
       <div className="bg-white rounded-lg shadow">
-        <table className="text-sm">
+        <table className="text-sm w-full">
           <thead className="border-b">
             <tr>
-              <th className="text-left p-4 font-medium text-gray-600 w-48">Name</th>
-              <th className="text-left p-4 font-medium text-gray-600 w-64">Email</th>
+              <th className="text-left p-4 font-medium text-gray-600 w-40">Name</th>
+              <th className="text-left p-4 font-medium text-gray-600 w-56">Email</th>
+              <th className="text-left p-4 font-medium text-gray-600">Zoom Link</th>
               <th className="p-4 w-16"></th>
             </tr>
           </thead>
@@ -42,6 +43,17 @@ export default async function FacilitatorsPage() {
                 <td className="p-4 whitespace-nowrap">{f.name}</td>
                 <td className="p-4 text-gray-600">{f.email}</td>
                 <td className="p-4">
+                  <form action={async (formData: FormData) => {
+                    'use server'
+                    await updateFacilitatorZoomLink(f.id, formData.get('zoom_link') as string)
+                  }} className="flex gap-2">
+                    <input name="zoom_link" defaultValue={f.zoom_link ?? ''}
+                      placeholder="https://zoom.us/j/..."
+                      className="border rounded px-2 py-1 text-sm w-64 text-gray-600" />
+                    <button type="submit" className="text-xs text-blue-600 hover:underline whitespace-nowrap">Save</button>
+                  </form>
+                </td>
+                <td className="p-4">
                   <form action={deleteFacilitator.bind(null, f.id)}>
                     <button type="submit" className="text-red-500 hover:text-red-700 text-xs">Remove</button>
                   </form>
@@ -49,7 +61,7 @@ export default async function FacilitatorsPage() {
               </tr>
             ))}
             {(facilitators ?? []).length === 0 && (
-              <tr><td colSpan={3} className="p-4 text-gray-400 text-center">No facilitators yet</td></tr>
+              <tr><td colSpan={4} className="p-4 text-gray-400 text-center">No facilitators yet</td></tr>
             )}
           </tbody>
         </table>
