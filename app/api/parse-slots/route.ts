@@ -7,7 +7,7 @@ const SYSTEM_PROMPT = `You are a scheduling data extractor. Extract group coachi
 Each slot must have exactly these fields:
 - facilitatorName: string — the facilitator's first name (or full name if given)
 - roundNumber: number — the round number (1, 2, 3, or 4)
-- dateTimeLocal: string — ISO 8601 local datetime without timezone offset, e.g. "2026-03-05T12:00:00"
+- dateTimeLocal: string — ISO 8601 wall-clock datetime without timezone offset, e.g. "2026-03-05T12:00:00"
 - timezone: string — IANA timezone string. Map abbreviations: ET/EST/EDT → "America/New_York", CT/CST/CDT → "America/Chicago", MT/MST/MDT → "America/Denver", PT/PST/PDT → "America/Los_Angeles"
 - capacity: number — maximum number of students
 
@@ -25,17 +25,38 @@ Example output:
   {"facilitatorName":"Gina","roundNumber":2,"dateTimeLocal":"2026-04-10T13:00:00","timezone":"America/New_York","capacity":6}
 ]}`
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let client: OpenAI | null = null
+function getClient(): OpenAI {
+  if (!client) client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return client
+}
+
+function isValidSlot(s: unknown): s is ParsedSlot {
+  if (!s || typeof s !== 'object') return false
+  const o = s as Record<string, unknown>
+  return (
+    typeof o.facilitatorName === 'string' &&
+    typeof o.roundNumber === 'number' &&
+    typeof o.dateTimeLocal === 'string' &&
+    typeof o.timezone === 'string' &&
+    typeof o.capacity === 'number'
+  )
+}
 
 export async function POST(request: Request) {
-  const { input } = await request.json() as { input: string }
-
-  if (!input?.trim()) {
-    return NextResponse.json({ slots: [] })
+  let input: string
+  try {
+    const body = await request.json() as { input?: string }
+    input = body.input ?? ''
+  } catch {
+    return NextResponse.json({ slots: [] }, { status: 400 })
   }
 
+  if (!input.trim()) return NextResponse.json({ slots: [] })
+  if (input.length > 10_000) return NextResponse.json({ slots: [] }, { status: 400 })
+
   try {
-    const response = await client.chat.completions.create({
+    const response = await getClient().chat.completions.create({
       model: 'gpt-4o-mini',
       response_format: { type: 'json_object' },
       messages: [
@@ -43,15 +64,20 @@ export async function POST(request: Request) {
         { role: 'user', content: input },
       ],
       temperature: 0,
+      max_tokens: 2048,
     })
 
-    const content = response.choices[0]?.message?.content
+    const choice = response.choices[0]
+    if (choice.finish_reason !== 'stop') {
+      console.warn('parse-slots: unexpected finish_reason', choice.finish_reason)
+    }
+
+    const content = choice?.message?.content
     if (!content) return NextResponse.json({ slots: [] })
 
     const parsed = JSON.parse(content)
-    const slots: ParsedSlot[] = Array.isArray(parsed)
-      ? parsed
-      : (parsed.slots ?? [])
+    const raw: unknown[] = Array.isArray(parsed.slots) ? parsed.slots : []
+    const slots = raw.filter(isValidSlot)
 
     return NextResponse.json({ slots })
   } catch (err) {
