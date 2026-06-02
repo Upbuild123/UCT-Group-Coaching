@@ -2,28 +2,38 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { ParsedSlot } from '@/lib/parser'
 
-const SYSTEM_PROMPT = `You are a scheduling data extractor. Extract group coaching session slots from the input text and return them as a JSON object with a "slots" array.
+const SYSTEM_PROMPT = `You are a scheduling data extractor for a group coaching program. Extract session slots and return a JSON object with a "slots" array.
 
 Each slot must have exactly these fields:
 - facilitatorName: string — the facilitator's first name (or full name if given)
-- roundNumber: number — the round number (1, 2, 3, or 4)
-- dateTimeLocal: string — ISO 8601 wall-clock datetime without timezone offset, e.g. "2026-03-05T12:00:00"
-- timezone: string — IANA timezone string. Map abbreviations: ET/EST/EDT → "America/New_York", CT/CST/CDT → "America/Chicago", MT/MST/MDT → "America/Denver", PT/PST/PDT → "America/Los_Angeles"
-- capacity: number — maximum number of students
+- roundNumber: number — infer from order: the 1st slot per facilitator is Round 1, 2nd is Round 2, 3rd is Round 3, 4th is Round 4
+- dateTimeLocal: string — ISO 8601 wall-clock datetime, e.g. "2026-11-12T17:30:00". If no year is given, use 2026.
+- timezone: string — IANA timezone. Map: ET/EST/EDT → "America/New_York", CT/CST/CDT → "America/Chicago", MT/MST/MDT → "America/Denver", PT/PST/PDT → "America/Los_Angeles". If no timezone is given, inherit from the most recent line that had one.
+- capacity: number — use 5 as default if not specified
 
-Return ONLY a valid JSON object like: {"slots": [...]}
+The input can be in any reasonable format. The facilitator name may appear at the start of the first line, or on its own line before the dates. Dates may be abbreviated (e.g. "Nov 12", "Dec 3.", "Jan 7"). Times may be written as "5:30 pm", "12 pm", "2pm", etc.
+
+Return ONLY: {"slots": [...]}
 If no valid slots are found, return {"slots": []}.
 
 Example input:
-Gina:
-Round 1: March 5, 2026, 12:00 PM ET, capacity 5
-Round 2: April 10, 2026, 1:00 PM ET, capacity 6
+Gina Nov 12. 5:30 pm ET
+Dec 3. 12 pm ET
+Dec 11 2 pm ET
+Jan 7 5:30 ET
 
 Example output:
 {"slots":[
-  {"facilitatorName":"Gina","roundNumber":1,"dateTimeLocal":"2026-03-05T12:00:00","timezone":"America/New_York","capacity":5},
-  {"facilitatorName":"Gina","roundNumber":2,"dateTimeLocal":"2026-04-10T13:00:00","timezone":"America/New_York","capacity":6}
-]}`
+  {"facilitatorName":"Gina","roundNumber":1,"dateTimeLocal":"2026-11-12T17:30:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Gina","roundNumber":2,"dateTimeLocal":"2026-12-03T12:00:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Gina","roundNumber":3,"dateTimeLocal":"2026-12-11T14:00:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Gina","roundNumber":4,"dateTimeLocal":"2027-01-07T17:30:00","timezone":"America/New_York","capacity":5}
+]}
+
+Another supported format (explicit rounds and capacity):
+Gina:
+Round 1: March 5, 2026, 12:00 PM ET, capacity 6
+Round 2: April 10, 2026, 1:00 PM ET, capacity 5`
 
 let client: OpenAI | null = null
 function getClient(): OpenAI {
