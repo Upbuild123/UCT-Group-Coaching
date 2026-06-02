@@ -4,6 +4,20 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatInTimeZone } from 'date-fns-tz'
 
+const TIMEZONES = [
+  { label: 'Eastern (ET)', value: 'America/New_York' },
+  { label: 'Central (CT)', value: 'America/Chicago' },
+  { label: 'Mountain (MT)', value: 'America/Denver' },
+  { label: 'Pacific (PT)', value: 'America/Los_Angeles' },
+  { label: 'Alaska (AKT)', value: 'America/Anchorage' },
+  { label: 'Hawaii (HT)', value: 'Pacific/Honolulu' },
+  { label: 'London (GMT/BST)', value: 'Europe/London' },
+  { label: 'Paris / Berlin (CET)', value: 'Europe/Paris' },
+  { label: 'India (IST)', value: 'Asia/Kolkata' },
+  { label: 'Japan (JST)', value: 'Asia/Tokyo' },
+  { label: 'Australia/Sydney (AEST)', value: 'Australia/Sydney' },
+]
+
 interface Group {
   id: string
   title: string
@@ -28,14 +42,23 @@ export default function SignupPage() {
   const [rounds, setRounds] = useState<RoundData[]>([])
   const [activeRound, setActiveRound] = useState(0)
   const [myTimezone, setMyTimezone] = useState('America/New_York')
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => { loadData() }, [])
 
+  async function handleTimezoneChange(tz: string) {
+    setMyTimezone(tz)
+    if (!userId) return
+    const supabase = createClient()
+    await supabase.from('users').update({ timezone: tz }).eq('id', userId)
+  }
+
   async function loadData() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    setUserId(user!.id)
     const { data: profile } = await supabase.from('users').select('timezone').eq('id', user!.id).single()
     setMyTimezone(profile?.timezone ?? 'America/New_York')
 
@@ -90,7 +113,21 @@ export default function SignupPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Group Coaching Signup</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Group Coaching Signup</h1>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-500">Your timezone:</label>
+          <select
+            value={myTimezone}
+            onChange={e => handleTimezoneChange(e.target.value)}
+            className="border rounded px-2 py-1 text-sm text-gray-700"
+          >
+            {TIMEZONES.map(tz => (
+              <option key={tz.value} value={tz.value}>{tz.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="flex gap-2 mb-6">
         {rounds.map((r, i) => (
           <button key={r.id} onClick={() => setActiveRound(i)}
