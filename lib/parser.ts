@@ -16,7 +16,10 @@ export async function parseSlots(input: string): Promise<ParsedSlot[]> {
       body: JSON.stringify({ input }),
     })
 
-    if (!res.ok) return []
+    if (!res.ok) {
+      console.error('parseSlots: non-ok response', res.status)
+      return []
+    }
 
     const { slots } = await res.json()
     return slots as ParsedSlot[]
