@@ -8,14 +8,17 @@ alter table public.audit_log enable row level security;
 
 -- Helper: get current user role
 create or replace function public.current_user_role()
-returns user_role language sql security definer stable as $$
+returns user_role language sql security definer stable
+set search_path = public, auth
+as $$
   select role from public.users where id = auth.uid()
 $$;
 
 -- users: admin can do everything; others read their own row
 create policy "admin full access" on public.users
   for all to authenticated
-  using (public.current_user_role() = 'admin');
+  using (public.current_user_role() = 'admin')
+  with check (public.current_user_role() = 'admin');
 
 create policy "self read" on public.users
   for select to authenticated
@@ -59,6 +62,11 @@ create policy "student manage own" on public.signups
   using (
     public.current_user_role() = 'student'
     and student_id = auth.uid()
+  )
+  with check (
+    public.current_user_role() = 'student'
+    and student_id = auth.uid()
+    and signup_type in ('primary', 'additional')
   );
 
 create policy "facilitator read group signups" on public.signups
@@ -80,6 +88,10 @@ create policy "student manage own" on public.full_group_requests
   using (
     public.current_user_role() = 'student'
     and student_id = auth.uid()
+  )
+  with check (
+    public.current_user_role() = 'student'
+    and student_id = auth.uid()
   );
 
 create policy "facilitator read involved" on public.full_group_requests
@@ -96,7 +108,11 @@ create policy "facilitator read involved" on public.full_group_requests
     )
   );
 
--- audit_log: admin read-only; no other access
+-- audit_log: admin read-only; authenticated users can insert their own entries
 create policy "admin read" on public.audit_log
   for select to authenticated
   using (public.current_user_role() = 'admin');
+
+create policy "authenticated insert own" on public.audit_log
+  for insert to authenticated
+  with check (actor_user_id = auth.uid());
