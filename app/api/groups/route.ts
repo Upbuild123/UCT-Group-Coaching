@@ -14,9 +14,15 @@ export async function POST(request: Request) {
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
+
+  // Resolve roundNumber → roundId if needed
+  const { data: rounds } = await adminClient.from('rounds').select('id, round_number')
+  const roundMap = Object.fromEntries((rounds ?? []).map((r: any) => [r.round_number, r.id]))
+
   const { slots } = body as {
     slots: Array<{
-      roundId: string
+      roundId?: string
+      roundNumber?: number
       facilitatorId: string
       title: string
       notes?: string
@@ -29,13 +35,16 @@ export async function POST(request: Request) {
   const created = []
 
   for (const slot of slots) {
+    const resolvedRoundId = slot.roundId ?? (slot.roundNumber ? roundMap[slot.roundNumber] : null)
+    if (!resolvedRoundId) continue
+
     const startUtc = fromZonedTime(slot.dateTimeLocal, slot.timezone)
     const endUtc = addMinutes(startUtc, 60)
 
     const { data: group, error } = await adminClient
       .from('group_sessions')
       .insert({
-        round_id: slot.roundId,
+        round_id: resolvedRoundId,
         facilitator_id: slot.facilitatorId,
         title: slot.title,
         notes: slot.notes ?? null,

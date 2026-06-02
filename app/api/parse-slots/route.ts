@@ -2,19 +2,21 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { ParsedSlot } from '@/lib/parser'
 
-const SYSTEM_PROMPT = `You are a scheduling data extractor for a group coaching program. Extract session slots and return a JSON object with a "slots" array.
+const SYSTEM_PROMPT = `You are a scheduling assistant for a group coaching program with 4 rounds. Parse the input and return a JSON object with a "slots" array.
 
 Each slot must have exactly these fields:
-- facilitatorName: string — the facilitator's first name (or full name if given)
-- roundNumber: number — infer from order: the 1st slot per facilitator is Round 1, 2nd is Round 2, 3rd is Round 3, 4th is Round 4
-- dateTimeLocal: string — ISO 8601 wall-clock datetime, e.g. "2026-11-12T17:30:00". If no year is given, use 2026.
-- timezone: string — IANA timezone. Map: ET/EST/EDT → "America/New_York", CT/CST/CDT → "America/Chicago", MT/MST/MDT → "America/Denver", PT/PST/PDT → "America/Los_Angeles". If no timezone is given, inherit from the most recent line that had one.
-- capacity: number — use 5 as default if not specified
+- facilitatorName: string — first name or full name
+- roundNumber: number — infer from order per facilitator: 1st slot = Round 1, 2nd = Round 2, 3rd = Round 3, 4th = Round 4
+- dateTimeLocal: string — ISO 8601 wall-clock datetime e.g. "2026-11-12T17:30:00". Assume year 2026 unless stated. If a date rolls past Dec 31, use 2027.
+- timezone: string — IANA timezone. ET/EST/EDT → "America/New_York", CT/CST/CDT → "America/Chicago", MT/MST/MDT → "America/Denver", PT/PST/PDT → "America/Los_Angeles". Inherit from the most recent line that had a timezone if omitted.
+- capacity: number — default 6 unless specified
 
-The input can be in any reasonable format. The facilitator name may appear at the start of the first line, or on its own line before the dates. Dates may be abbreviated (e.g. "Nov 12", "Dec 3.", "Jan 7"). Times may be written as "5:30 pm", "12 pm", "2pm", etc.
+The input may include natural language instructions like "change all to capacity 5" or "set Gina's groups to capacity 4". Apply those instructions to the relevant slots.
+
+Accept any reasonable date/time format. The facilitator name may be inline with the first date or on its own line.
 
 Return ONLY: {"slots": [...]}
-If no valid slots are found, return {"slots": []}.
+If no valid slots found: {"slots": []}
 
 Example input:
 Gina Nov 12. 5:30 pm ET
@@ -22,18 +24,24 @@ Dec 3. 12 pm ET
 Dec 11 2 pm ET
 Jan 7 5:30 ET
 
+Vipin Nov 14 10am ET
+Dec 5 2pm ET
+Dec 19 11am ET
+Jan 9 3pm ET
+
+Change all to capacity 5
+
 Example output:
 {"slots":[
   {"facilitatorName":"Gina","roundNumber":1,"dateTimeLocal":"2026-11-12T17:30:00","timezone":"America/New_York","capacity":5},
   {"facilitatorName":"Gina","roundNumber":2,"dateTimeLocal":"2026-12-03T12:00:00","timezone":"America/New_York","capacity":5},
   {"facilitatorName":"Gina","roundNumber":3,"dateTimeLocal":"2026-12-11T14:00:00","timezone":"America/New_York","capacity":5},
-  {"facilitatorName":"Gina","roundNumber":4,"dateTimeLocal":"2027-01-07T17:30:00","timezone":"America/New_York","capacity":5}
-]}
-
-Another supported format (explicit rounds and capacity):
-Gina:
-Round 1: March 5, 2026, 12:00 PM ET, capacity 6
-Round 2: April 10, 2026, 1:00 PM ET, capacity 5`
+  {"facilitatorName":"Gina","roundNumber":4,"dateTimeLocal":"2027-01-07T17:30:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Vipin","roundNumber":1,"dateTimeLocal":"2026-11-14T10:00:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Vipin","roundNumber":2,"dateTimeLocal":"2026-12-05T14:00:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Vipin","roundNumber":3,"dateTimeLocal":"2026-12-19T11:00:00","timezone":"America/New_York","capacity":5},
+  {"facilitatorName":"Vipin","roundNumber":4,"dateTimeLocal":"2027-01-09T15:00:00","timezone":"America/New_York","capacity":5}
+]}`
 
 let client: OpenAI | null = null
 function getClient(): OpenAI {

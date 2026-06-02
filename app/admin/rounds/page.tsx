@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { updateSignupStatus } from './actions'
 import Link from 'next/link'
+import GroupParser from './GroupParser'
 
 export default async function RoundsPage() {
   const supabase = await createClient()
@@ -9,9 +10,16 @@ export default async function RoundsPage() {
     .select('*, group_sessions(id)')
     .order('round_number')
 
+  const { data: facilitators } = await supabase
+    .from('users')
+    .select('id, name')
+    .eq('role', 'facilitator')
+    .order('name')
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Rounds</h1>
+      <GroupParser facilitators={facilitators ?? []} />
       <div className="space-y-4">
         {(rounds ?? []).map((round: any) => (
           <div key={round.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
