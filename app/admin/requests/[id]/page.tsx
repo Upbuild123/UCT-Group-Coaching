@@ -14,6 +14,9 @@ export default async function AdminRequestPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: adminProfile } = await adminClient.from('users').select('role').eq('id', user.id).single()
+  if (adminProfile?.role !== 'admin') redirect('/login')
+
   const { data: fgr } = await adminClient
     .from('full_group_requests')
     .select('*')
@@ -38,8 +41,9 @@ export default async function AdminRequestPage({
       : Promise.resolve({ data: null }),
   ])
 
-  const student = studentRes.data!
-  const requestedGroup = requestedGroupRes.data!
+  const student = studentRes.data
+  const requestedGroup = requestedGroupRes.data
+  if (!student || !requestedGroup) redirect('/admin/dashboard')
   const currentGroup = currentGroupRes.data
   const requestedFacilitator = (requestedGroup as any).users
   const currentFacilitator = currentGroup ? (currentGroup as any).users : null

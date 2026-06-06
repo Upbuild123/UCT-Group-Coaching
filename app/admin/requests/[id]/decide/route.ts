@@ -22,12 +22,13 @@ export async function POST(
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const formData = await request.formData()
-  const decision = formData.get('decision') as string
+  const decisionValue = formData.get('decision')
   const keepCurrentSlot = formData.get('keepCurrentSlot') === 'true'
 
-  if (decision !== 'approved' && decision !== 'rejected') {
+  if (!decisionValue || (decisionValue !== 'approved' && decisionValue !== 'rejected')) {
     return NextResponse.json({ error: 'Invalid decision' }, { status: 400 })
   }
+  const decision = decisionValue as 'approved' | 'rejected'
 
   try {
     await processDecision({
