@@ -13,7 +13,20 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { groupSessionId, reason } = await request.json()
+  let groupSessionId: string, reason: string | undefined
+  try {
+    const body = await request.json()
+    groupSessionId = body.groupSessionId
+    reason = body.reason
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+  if (!groupSessionId || typeof groupSessionId !== 'string') {
+    return NextResponse.json({ error: 'groupSessionId is required' }, { status: 400 })
+  }
+  if (reason !== undefined && (typeof reason !== 'string' || reason.length > 2000)) {
+    return NextResponse.json({ error: 'reason must be a string under 2000 characters' }, { status: 400 })
+  }
 
   const { data: group } = await adminClient
     .from('group_sessions')
@@ -65,12 +78,14 @@ export async function POST(request: Request) {
 
   const [studentRes, adminRes] = await Promise.all([
     adminClient.from('users').select('name, email').eq('id', user.id).single(),
-    adminClient.from('users').select('email').eq('role', 'admin').single(),
+    adminClient.from('users').select('email').eq('role', 'admin').limit(1).maybeSingle(),
   ])
 
-  const student = studentRes.data!
+  const student = studentRes.data
+  if (!student) return NextResponse.json({ error: 'Student profile not found' }, { status: 500 })
   const adminEmail = adminRes.data?.email
   const requestedFacilitator = (group as any).users as { id: string; name: string; email: string }
+  if (!requestedFacilitator?.id) return NextResponse.json({ error: 'Facilitator not found' }, { status: 500 })
   const currentGroup = currentSignup ? (currentSignup as any).group_sessions : null
   const currentFacilitator = currentGroup ? currentGroup.users : null
 
@@ -81,7 +96,8 @@ export async function POST(request: Request) {
   )
   const requestedRosterCount = (group.signups ?? []).filter((s: any) => s.status === 'confirmed').length
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!baseUrl) return NextResponse.json({ error: 'App URL not configured' }, { status: 500 })
 
   if (adminEmail) {
     sendFullGroupRequestNotification({
@@ -135,13 +151,16 @@ export async function POST(request: Request) {
     }).catch((err: unknown) => console.error('Current facilitator email failed', err))
   }
 
-  await adminClient.from('audit_log').insert({
-    actor_user_id: user.id,
-    action: 'full_group_request.created',
-    entity_type: 'full_group_request',
-    entity_id: fgr.id,
-    metadata: { requested_group_session_id: groupSessionId },
-  })
+  void (async () => {
+    const { error: auditErr } = await adminClient.from('audit_log').insert({
+      actor_user_id: user.id,
+      action: 'full_group_request.created',
+      entity_type: 'full_group_request',
+      entity_id: fgr.id,
+      metadata: { requested_group_session_id: groupSessionId },
+    })
+    if (auditErr) console.error('Audit log failed', auditErr)
+  })()
 
   return NextResponse.json({ requestId: fgr.id })
 }
