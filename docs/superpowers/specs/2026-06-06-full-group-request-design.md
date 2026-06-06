@@ -33,7 +33,7 @@ full_group_requests
   created_at
 ```
 
-No schema changes required.
+**Schema change required:** `current_group_session_id` is currently `NOT NULL` in the DB. Since students don't need a current group to submit a request, a migration must make it nullable.
 
 ## Token Design
 
@@ -185,7 +185,7 @@ When rejected:
 
 ### Decision result page
 
-- Rendered inline by `GET /api/requests/[id]/decide` as a simple HTML response (not a full Next.js page)
+- A Next.js page at `app/requests/[id]/decide/page.tsx` that reads the token from the query string, processes the decision server-side, and renders a confirmation or error message
 - Shows success or "already resolved" message with no further actions needed
 
 ## Environment Variables
@@ -205,9 +205,11 @@ Add `DECISION_TOKEN_SECRET` — a random secret string used to sign JWTs. Must b
 app/student/signup/page.tsx              — add Request to join button + modal
 app/admin/requests/[id]/page.tsx         — new admin decision page
 app/admin/requests/[id]/decide/route.ts  — admin decision API
+app/admin/layout.tsx                     — add requests nav link if needed
 app/api/requests/route.ts                — create request + send emails
-app/api/requests/[id]/decide/route.ts    — tokenized facilitator decision
+app/requests/[id]/decide/page.tsx        — tokenized facilitator decision result page (no auth)
 lib/email.ts                             — add 5 new email functions
 lib/tokens.ts                            — JWT sign/verify helpers
+supabase/migrations/005_nullable_current_group.sql  — make current_group_session_id nullable
 .env                                     — add DECISION_TOKEN_SECRET
 ```
