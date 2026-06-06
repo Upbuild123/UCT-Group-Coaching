@@ -52,7 +52,7 @@ export async function processDecision({
     fgr.current_group_session_id
       ? adminClient
           .from('group_sessions')
-          .select('id, title, start_time_utc, original_timezone, capacity, calendar_event_id, facilitator_id, users!facilitator_id(id, name, email), signups(id, status)')
+          .select('id, title, start_time_utc, original_timezone, capacity, status, calendar_event_id, facilitator_id, users!facilitator_id(id, name, email), signups(id, status)')
           .eq('id', fgr.current_group_session_id)
           .single()
       : Promise.resolve({ data: null }),
@@ -121,7 +121,7 @@ export async function processDecision({
 
     // Re-open old group if removing this student drops it below capacity
     const oldConfirmed = (currentGroup.signups ?? []).filter((s: any) => s.status === 'confirmed').length
-    if (oldConfirmed <= currentGroup.capacity) {
+    if (currentGroup.status === 'full' && oldConfirmed - 1 < currentGroup.capacity) {
       await adminClient.from('group_sessions').update({ status: 'published' }).eq('id', currentGroup.id)
     }
 
