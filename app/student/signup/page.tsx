@@ -53,6 +53,12 @@ export default function SignupPage() {
 
   useEffect(() => { loadData() }, [])
 
+  useEffect(() => {
+    setModalGroupId(null)
+    setModalReason('')
+    setRequestError(null)
+  }, [activeRound])
+
   async function handleTimezoneChange(tz: string) {
     setMyTimezone(tz)
     if (!userId) return
@@ -143,6 +149,7 @@ export default function SignupPage() {
   if (loading) return <div className="text-center py-12 text-gray-400">Loading...</div>
 
   const round = rounds[activeRound]
+  const modalGroup = modalGroupId ? round?.groups.find(g => g.id === modalGroupId) ?? null : null
 
   return (
     <div>
@@ -236,45 +243,41 @@ export default function SignupPage() {
         </div>
       )}
 
-      {modalGroupId && (() => {
-        const modalGroup = round?.groups.find(g => g.id === modalGroupId)
-        if (!modalGroup) return null
-        return (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
-              <h2 className="font-semibold text-lg mb-1">Request to join full group</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                {modalGroup.facilitator_name} —{' '}
-                {formatInTimeZone(new Date(modalGroup.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
-              </p>
-              <label className="block text-sm text-gray-600 mb-1">Reason (optional)</label>
-              <textarea
-                value={modalReason}
-                onChange={e => setModalReason(e.target.value)}
-                placeholder="Why do you want to join this group?"
-                rows={3}
-                className="w-full border rounded px-3 py-2 text-sm mb-3 resize-none"
-              />
-              {requestError && (
-                <p className="text-sm text-red-600 mb-3">{requestError}</p>
-              )}
-              <div className="flex gap-2 justify-end">
-                <button
-                  onClick={() => setModalGroupId(null)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50">
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleRequest(modalGroupId)}
-                  disabled={requestLoading}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                  {requestLoading ? 'Submitting...' : 'Submit request'}
-                </button>
-              </div>
+      {modalGroup && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="font-semibold text-lg mb-1">Request to join full group</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              {modalGroup.facilitator_name} —{' '}
+              {formatInTimeZone(new Date(modalGroup.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
+            </p>
+            <label className="block text-sm text-gray-600 mb-1">Reason (optional)</label>
+            <textarea
+              value={modalReason}
+              onChange={e => setModalReason(e.target.value)}
+              placeholder="Why do you want to join this group?"
+              rows={3}
+              className="w-full border rounded px-3 py-2 text-sm mb-3 resize-none"
+            />
+            {requestError && (
+              <p className="text-sm text-red-600 mb-3">{requestError}</p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setModalGroupId(null)}
+                className="px-4 py-2 text-sm border rounded hover:bg-gray-50">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRequest(modalGroupId!)}
+                disabled={requestLoading}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
+                {requestLoading ? 'Submitting...' : 'Submit request'}
+              </button>
             </div>
           </div>
-        )
-      })()}
+        </div>
+      )}
     </div>
   )
 }
