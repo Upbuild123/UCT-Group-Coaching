@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 export interface DecisionTokenPayload {
   requestId: string
@@ -46,7 +46,11 @@ export function verifyDecisionToken(token: string): DecisionTokenPayload {
   if (parts.length !== 3) throw new Error('Invalid token format')
   const [header, body, sig] = parts
   const expected = signParts(header, body)
-  if (sig !== expected) throw new Error('Invalid signature')
+  const sigBuf = Buffer.from(sig, 'base64url')
+  const expectedBuf = Buffer.from(expected, 'base64url')
+  if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+    throw new Error('Invalid signature')
+  }
   const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as DecisionTokenPayload
   if (payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Token expired')
   return payload
