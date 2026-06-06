@@ -13,13 +13,13 @@ export async function createStudent(formData: FormData) {
     password: crypto.randomUUID(),
     email_confirm: true,
   })
-  if (authError) return { error: authError.message }
+  if (authError) throw new Error(authError.message)
 
   const { error: profileError } = await adminClient
     .from('users')
     .insert({ id: authUser.user.id, name, email, role: 'student', timezone })
 
-  if (profileError) return { error: profileError.message }
+  if (profileError) throw new Error(profileError.message)
 
   revalidatePath('/admin/students')
 }
