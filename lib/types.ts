@@ -52,7 +52,7 @@ export interface FullGroupRequest {
   id: string
   student_id: string
   round_id: string
-  current_group_session_id: string
+  current_group_session_id: string | null
   requested_group_session_id: string
   reason: string | null
   status: RequestStatus
