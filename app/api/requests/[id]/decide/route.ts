@@ -9,7 +9,7 @@ export async function GET(
   const { id } = await params
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   if (!token) {
     return NextResponse.redirect(`${baseUrl}/requests/result?outcome=invalid`)
@@ -28,13 +28,20 @@ export async function GET(
 
   const facilitatorField = await getFacilitatorField(id, payload.actorUserId)
 
-  const { alreadyResolved } = await processDecision({
-    requestId: id,
-    decision: payload.decision,
-    actorUserId: payload.actorUserId,
-    keepCurrentSlot: false,
-    facilitatorField,
-  })
+  let alreadyResolved = false
+  try {
+    const result = await processDecision({
+      requestId: id,
+      decision: payload.decision,
+      actorUserId: payload.actorUserId,
+      keepCurrentSlot: false,
+      facilitatorField,
+    })
+    alreadyResolved = result.alreadyResolved
+  } catch (err) {
+    console.error('processDecision failed:', err)
+    return NextResponse.redirect(`${baseUrl}/requests/result?outcome=error`)
+  }
 
   if (alreadyResolved) {
     return NextResponse.redirect(`${baseUrl}/requests/result?outcome=already_resolved`)

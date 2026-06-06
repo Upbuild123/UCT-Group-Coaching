@@ -26,9 +26,16 @@ export default async function RequestResultPage({
       body: 'This link is invalid or has expired. Please contact michael@upbuild.com if you need help.',
       color: 'text-gray-700',
     },
+    error: {
+      heading: 'Something went wrong',
+      body: 'An error occurred while processing this request. Please contact michael@upbuild.com for help.',
+      color: 'text-gray-700',
+    },
   }
 
-  const msg = messages[outcome ?? ''] ?? messages['invalid']
+  const validOutcomes = ['approved', 'rejected', 'already_resolved', 'invalid', 'error'] as const
+  const key = validOutcomes.find(k => k === outcome) ?? 'invalid'
+  const msg = messages[key]
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
