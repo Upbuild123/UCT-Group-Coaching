@@ -21,18 +21,10 @@ export async function processDecision({
   keepCurrentSlot?: boolean
   facilitatorField?: 'new_facilitator_decision' | 'old_facilitator_decision' | null
 }): Promise<{ alreadyResolved: boolean }> {
-  const { data: fgr } = await adminClient
-    .from('full_group_requests')
-    .select('*')
-    .eq('id', requestId)
-    .single()
-
-  if (!fgr || fgr.status !== 'pending') return { alreadyResolved: true }
-
   const extraFields: Record<string, string> = {}
   if (facilitatorField) extraFields[facilitatorField] = decision
 
-  await adminClient
+  const { data: fgr } = await adminClient
     .from('full_group_requests')
     .update({
       status: decision,
@@ -41,6 +33,11 @@ export async function processDecision({
       ...extraFields,
     })
     .eq('id', requestId)
+    .eq('status', 'pending')
+    .select('*')
+    .single()
+
+  if (!fgr) return { alreadyResolved: true }
 
   const [studentRes, requestedGroupRes, currentGroupRes] = await Promise.all([
     adminClient.from('users').select('id, name, email').eq('id', fgr.student_id).single(),
@@ -58,8 +55,9 @@ export async function processDecision({
       : Promise.resolve({ data: null }),
   ])
 
-  const student = studentRes.data!
-  const requestedGroup = requestedGroupRes.data!
+  const student = studentRes.data
+  const requestedGroup = requestedGroupRes.data
+  if (!student || !requestedGroup) throw new Error('Failed to load request data')
   const currentGroup = currentGroupRes.data
 
   if (decision === 'rejected') {
@@ -98,13 +96,14 @@ export async function processDecision({
   }
 
   // APPROVED: insert new signup
-  await adminClient.from('signups').insert({
+  const { error: signupError } = await adminClient.from('signups').insert({
     student_id: student.id,
     group_session_id: requestedGroup.id,
     round_id: fgr.round_id,
     status: 'confirmed',
     signup_type: 'admin_override',
   })
+  if (signupError) throw new Error(`Failed to insert signup: ${signupError.message}`)
 
   const newCount = (requestedGroup.signups ?? []).filter((s: any) => s.status === 'confirmed').length + 1
   if (newCount >= requestedGroup.capacity) {
