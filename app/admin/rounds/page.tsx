@@ -7,7 +7,7 @@ export default async function RoundsPage() {
   const supabase = await createClient()
   const { data: rounds } = await supabase
     .from('rounds')
-    .select('*, group_sessions(id)')
+    .select('*, group_sessions(id, status)')
     .order('round_number')
 
   const { data: facilitators } = await supabase
@@ -25,7 +25,7 @@ export default async function RoundsPage() {
           <div key={round.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
             <div>
               <h2 className="font-semibold">{round.title}</h2>
-              <p className="text-sm text-gray-500">{round.group_sessions?.length ?? 0} groups</p>
+              <p className="text-sm text-gray-500">{(round.group_sessions ?? []).filter((g: any) => g.status === 'published' || g.status === 'full').length} groups</p>
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-xs px-2 py-1 rounded-full ${
