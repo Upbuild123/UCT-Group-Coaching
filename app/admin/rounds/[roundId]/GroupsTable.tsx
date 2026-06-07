@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { formatInTimeZone } from 'date-fns-tz'
 import GroupEditor from './GroupEditor'
 
@@ -52,8 +52,8 @@ export default function GroupsTable({
             const confirmed = group.signups.filter(s => s.status === 'confirmed').length
             const isExpanded = expandedId === group.id
             return (
-              <>
-                <tr key={group.id} className="border-b">
+              <React.Fragment key={group.id}>
+                <tr className="border-b">
                   <td className="p-4">{group.users?.name}</td>
                   <td className="p-4">
                     {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, yyyy h:mm a zzz')}
@@ -69,16 +69,18 @@ export default function GroupsTable({
                       {group.status}
                     </span>
                   </td>
-                  <td className="p-4 flex gap-3 items-center">
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : group.id)}
-                      className="text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      {isExpanded ? 'Done' : 'Edit'}
-                    </button>
-                    <form action={cancelGroup.bind(null, group.id)}>
-                      <button type="submit" className="text-xs text-red-500 hover:text-red-700">Remove group</button>
-                    </form>
+                  <td className="p-4">
+                    <div className="flex gap-3 items-center">
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : group.id)}
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        {isExpanded ? 'Done' : 'Edit'}
+                      </button>
+                      <form action={cancelGroup.bind(null, group.id)}>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Remove group</button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
                 {isExpanded && (
@@ -88,7 +90,7 @@ export default function GroupsTable({
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             )
           })}
           {groups.length === 0 && (
