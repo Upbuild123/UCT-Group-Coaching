@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
+import { adminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { formatInTimeZone } from 'date-fns-tz'
 import { cancelGroup } from './actions'
+import GroupsTable from './GroupsTable'
 
 export default async function RoundDetailPage({ params }: { params: Promise<{ roundId: string }> }) {
   const { roundId } = await params
@@ -22,6 +23,12 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
     .eq('round_id', roundId)
     .order('start_time_utc')
 
+  const { data: allStudents } = await adminClient
+    .from('users')
+    .select('id, name, email')
+    .eq('role', 'student')
+    .order('name')
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -31,55 +38,12 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
           + Add Groups
         </Link>
       </div>
-      <div className="bg-white rounded-lg shadow">
-        <table className="w-full text-sm">
-          <thead className="border-b">
-            <tr>
-              <th className="text-left p-4 font-medium text-gray-600">Facilitator</th>
-              <th className="text-left p-4 font-medium text-gray-600">Date / Time</th>
-              <th className="text-left p-4 font-medium text-gray-600">Capacity</th>
-              <th className="text-left p-4 font-medium text-gray-600">Signups</th>
-              <th className="text-left p-4 font-medium text-gray-600">Status</th>
-              <th className="p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {(groups ?? []).filter((g: any) => g.status !== 'canceled').map((group: any) => {
-              const confirmed = (group.signups ?? []).filter((s: any) => s.status === 'confirmed').length
-              return (
-                <tr key={group.id} className="border-b last:border-0">
-                  <td className="p-4">{group.users?.name}</td>
-                  <td className="p-4">
-                    {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, yyyy h:mm a zzz')}
-                  </td>
-                  <td className="p-4">{group.capacity}</td>
-                  <td className="p-4">{confirmed} / {group.capacity}</td>
-                  <td className="p-4">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      group.status === 'published' ? 'bg-green-100 text-green-700' :
-                      group.status === 'full' ? 'bg-orange-100 text-orange-700' :
-                      group.status === 'canceled' ? 'bg-red-100 text-red-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {group.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    {group.status !== 'canceled' && (
-                      <form action={cancelGroup.bind(null, group.id)}>
-                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Remove group</button>
-                      </form>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-            {(groups ?? []).length === 0 && (
-              <tr><td colSpan={6} className="p-4 text-gray-400 text-center">No groups yet</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <GroupsTable
+        groups={(groups ?? []).filter((g: any) => g.status !== 'canceled')}
+        roundId={roundId}
+        allStudents={allStudents ?? []}
+        cancelGroup={cancelGroup}
+      />
     </div>
   )
 }
