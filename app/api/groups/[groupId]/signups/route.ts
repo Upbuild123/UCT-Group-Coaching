@@ -5,14 +5,11 @@ import { addAttendeeToEvent } from '@/lib/calendar'
 import { sendFullGroupApprovalEmail } from '@/lib/email'
 import { formatInTimeZone } from 'date-fns-tz'
 
-async function recalculateStatus(groupId: string) {
-  const { data: group } = await adminClient
-    .from('group_sessions')
-    .select('capacity, status')
-    .eq('id', groupId)
-    .single()
-
-  if (!group || group.status === 'draft' || group.status === 'canceled') return
+async function recalculateStatus(
+  groupId: string,
+  { capacity, status }: { capacity: number; status: string }
+) {
+  if (status === 'draft' || status === 'canceled') return
 
   const { count } = await adminClient
     .from('signups')
@@ -21,7 +18,7 @@ async function recalculateStatus(groupId: string) {
     .eq('status', 'confirmed')
 
   const confirmed = count ?? 0
-  const newStatus = confirmed >= group.capacity ? 'full' : 'published'
+  const newStatus = confirmed >= capacity ? 'full' : 'published'
   await adminClient.from('group_sessions').update({ status: newStatus }).eq('id', groupId)
 }
 
@@ -37,7 +34,14 @@ export async function POST(
   const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { studentId } = await request.json() as { studentId: string }
+  let body: { studentId: string }
+  try {
+    body = (await request.json()) as { studentId: string }
+  } catch (err: unknown) {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  const { studentId } = body
   if (!studentId) return NextResponse.json({ error: 'studentId required' }, { status: 400 })
 
   // Check not already confirmed
@@ -67,7 +71,7 @@ export async function POST(
   if (!group || !student) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Create signup
-  await adminClient.from('signups').insert({
+  const { error: insertError } = await adminClient.from('signups').insert({
     student_id: studentId,
     group_session_id: groupId,
     round_id: group.round_id,
@@ -75,7 +79,19 @@ export async function POST(
     signup_type: 'admin_override',
   })
 
-  await recalculateStatus(groupId)
+  if (insertError) {
+    console.error('Signup insert failed', insertError)
+    return NextResponse.json({ error: 'Failed to create signup' }, { status: 500 })
+  }
+
+  try {
+    await recalculateStatus(groupId, {
+      capacity: group.capacity,
+      status: group.status,
+    })
+  } catch (err: unknown) {
+    console.error('Status recalculation failed', err)
+  }
 
   // Calendar + email fire-and-forget
   if (group.calendar_event_id) {
