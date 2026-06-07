@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { cancelGroup } from './actions'
+import { cancelGroup, publishGroup, publishAllDraftGroups } from './actions'
 import GroupsTable from './GroupsTable'
 
 export default async function RoundDetailPage({ params }: { params: Promise<{ roundId: string }> }) {
@@ -33,16 +33,24 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{round.title} — Groups</h1>
-        <Link href={`/admin/rounds/${roundId}/new`}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-          + Add Groups
-        </Link>
+        <div className="flex gap-2">
+          <form action={publishAllDraftGroups.bind(null, roundId)}>
+            <button type="submit" className="px-4 py-2 border border-green-600 text-green-700 rounded hover:bg-green-50 text-sm">
+              Publish all drafts
+            </button>
+          </form>
+          <Link href={`/admin/rounds/${roundId}/new`}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+            + Add Groups
+          </Link>
+        </div>
       </div>
       <GroupsTable
         groups={(groups ?? []).filter((g: any) => g.status !== 'canceled')}
         roundId={roundId}
         allStudents={allStudents ?? []}
         cancelGroup={cancelGroup}
+        publishGroup={publishGroup}
       />
     </div>
   )

@@ -6,6 +6,28 @@ import { sendCancellationNotificationEmail } from '@/lib/email'
 import { revalidatePath } from 'next/cache'
 import { formatInTimeZone } from 'date-fns-tz'
 
+export async function publishGroup(groupId: string) {
+  const { data: group } = await adminClient
+    .from('group_sessions')
+    .select('round_id')
+    .eq('id', groupId)
+    .single()
+
+  if (!group) return
+
+  await adminClient.from('group_sessions').update({ status: 'published' }).eq('id', groupId)
+  revalidatePath(`/admin/rounds/${group.round_id}`)
+}
+
+export async function publishAllDraftGroups(roundId: string) {
+  await adminClient
+    .from('group_sessions')
+    .update({ status: 'published' })
+    .eq('round_id', roundId)
+    .eq('status', 'draft')
+  revalidatePath(`/admin/rounds/${roundId}`)
+}
+
 export async function cancelGroup(groupId: string) {
   const { data: group } = await adminClient
     .from('group_sessions')

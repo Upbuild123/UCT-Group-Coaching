@@ -26,11 +26,13 @@ export default function GroupsTable({
   roundId,
   allStudents,
   cancelGroup,
+  publishGroup,
 }: {
   groups: Group[]
   roundId: string
   allStudents: Student[]
   cancelGroup: (groupId: string) => Promise<void>
+  publishGroup: (groupId: string) => Promise<void>
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -71,6 +73,11 @@ export default function GroupsTable({
                   </td>
                   <td className="p-4">
                     <div className="flex gap-3 items-center">
+                      {group.status === 'draft' && (
+                        <form action={publishGroup.bind(null, group.id)}>
+                          <button type="submit" className="text-xs text-green-600 hover:text-green-800">Publish</button>
+                        </form>
+                      )}
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : group.id)}
                         className="text-xs text-blue-600 hover:text-blue-800"
