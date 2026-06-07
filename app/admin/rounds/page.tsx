@@ -13,7 +13,7 @@ export default async function RoundsPage() {
   const { data: facilitators } = await supabase
     .from('users')
     .select('id, name')
-    .eq('role', 'facilitator')
+    .in('role', ['facilitator', 'admin'])
     .order('name')
 
   return (
