@@ -44,7 +44,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
             </tr>
           </thead>
           <tbody>
-            {(groups ?? []).map((group: any) => {
+            {(groups ?? []).filter((g: any) => g.status !== 'canceled').map((group: any) => {
               const confirmed = (group.signups ?? []).filter((s: any) => s.status === 'confirmed').length
               return (
                 <tr key={group.id} className="border-b last:border-0">
@@ -67,7 +67,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
                   <td className="p-4">
                     {group.status !== 'canceled' && (
                       <form action={cancelGroup.bind(null, group.id)}>
-                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Cancel</button>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Remove group</button>
                       </form>
                     )}
                   </td>
