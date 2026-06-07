@@ -1,14 +1,26 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createStudent, deleteStudent } from './actions'
 import BulkImport from './BulkImport'
+import { useEffect, useState } from 'react'
 
-export default async function StudentsPage() {
-  const supabase = await createClient()
-  const { data: students } = await supabase
-    .from('users')
-    .select('*')
-    .eq('role', 'student')
-    .order('name')
+interface Student {
+  id: string
+  name: string
+  email: string
+}
+
+function StudentsContent() {
+  const error = useSearchParams().get('error')
+  const [students, setStudents] = useState<Student[]>([])
+
+  useEffect(() => {
+    fetch('/api/users?role=student')
+      .then(r => r.json())
+      .then(d => setStudents(d.users ?? []))
+  }, [error])
 
   return (
     <div className="max-w-2xl">
@@ -16,6 +28,7 @@ export default async function StudentsPage() {
       <BulkImport />
       <div className="bg-white rounded-lg shadow mb-6 p-4">
         <h2 className="font-medium mb-3">Add Student</h2>
+        {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
         <form action={createStudent} className="flex gap-3 flex-wrap">
           <input name="name" placeholder="Full name" required
             className="border rounded px-3 py-2 text-sm w-48" />
@@ -37,7 +50,7 @@ export default async function StudentsPage() {
             </tr>
           </thead>
           <tbody>
-            {(students ?? []).map((student: any) => (
+            {students.map(student => (
               <tr key={student.id} className="border-b last:border-0">
                 <td className="p-4 whitespace-nowrap">{student.name}</td>
                 <td className="p-4 text-gray-600">{student.email}</td>
@@ -48,12 +61,20 @@ export default async function StudentsPage() {
                 </td>
               </tr>
             ))}
-            {(students ?? []).length === 0 && (
+            {students.length === 0 && (
               <tr><td colSpan={3} className="p-4 text-gray-400 text-center">No students yet</td></tr>
             )}
           </tbody>
         </table>
       </div>
     </div>
+  )
+}
+
+export default function StudentsPage() {
+  return (
+    <Suspense>
+      <StudentsContent />
+    </Suspense>
   )
 }

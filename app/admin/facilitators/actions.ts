@@ -2,6 +2,7 @@
 
 import { adminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 export async function createFacilitator(formData: FormData) {
   const name = formData.get('name') as string
@@ -12,13 +13,13 @@ export async function createFacilitator(formData: FormData) {
     password: crypto.randomUUID(),
     email_confirm: true,
   })
-  if (authError) throw new Error(authError.message)
+  if (authError) redirect(`/admin/facilitators?error=${encodeURIComponent(authError.message)}`)
 
   const { error: profileError } = await adminClient
     .from('users')
     .insert({ id: authUser.user.id, name, email, role: 'facilitator', timezone: 'America/New_York' })
 
-  if (profileError) throw new Error(profileError.message)
+  if (profileError) redirect(`/admin/facilitators?error=${encodeURIComponent(profileError.message)}`)
 
   revalidatePath('/admin/facilitators')
 }

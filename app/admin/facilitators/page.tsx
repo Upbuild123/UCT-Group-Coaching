@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createFacilitator, deleteFacilitator, updateFacilitatorZoomLink } from './actions'
 import SeedFacilitators from './SeedFacilitators'
 
-export default async function FacilitatorsPage() {
+export default async function FacilitatorsPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams
   const supabase = await createClient()
   const { data: facilitators } = await supabase
     .from('users')
     .select('*')
-    .eq('role', 'facilitator')
+    .in('role', ['facilitator', 'admin'])
     .order('name')
 
   return (
@@ -16,6 +17,7 @@ export default async function FacilitatorsPage() {
       <SeedFacilitators existingCount={facilitators?.length ?? 0} />
       <div className="bg-white rounded-lg shadow mb-6 p-4">
         <h2 className="font-medium mb-3">Add Facilitator</h2>
+        {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
         <form action={createFacilitator} className="flex gap-3 flex-wrap">
           <input name="name" placeholder="Full name" required
             className="border rounded px-3 py-2 text-sm w-48" />
