@@ -1,33 +1,71 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { login } from './actions'
+import { login, sendMagicLink } from './actions'
 
 function LoginForm() {
-  const error = useSearchParams().get('error')
+  const params = useSearchParams()
+  const error = params.get('error')
+  const sent = params.get('sent')
+  const [showPassword, setShowPassword] = useState(false)
+
+  if (sent) {
+    return (
+      <div className="text-center space-y-3">
+        <p className="text-gray-700">Check your email</p>
+        <p className="text-sm text-gray-500">We sent a login link to <strong>{sent}</strong>. Click it to sign in.</p>
+        <button onClick={() => window.location.href = '/login'} className="text-sm text-blue-600 hover:underline">
+          Use a different email
+        </button>
+      </div>
+    )
+  }
+
+  if (showPassword) {
+    return (
+      <form action={login} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+          <input id="email" name="email" type="email" required
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+          <input id="password" name="password" type="password" required
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <button type="submit"
+          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Sign in
+        </button>
+        <button type="button" onClick={() => setShowPassword(false)}
+          className="w-full text-sm text-gray-500 hover:text-gray-700">
+          ← Send me a login link instead
+        </button>
+      </form>
+    )
+  }
 
   return (
-    <form action={login} className="space-y-4">
+    <form action={sendMagicLink} className="space-y-4">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
         <input id="email" name="email" type="email" required
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
         />
       </div>
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-        <input id="password" name="password" type="password" required
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-        />
-      </div>
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <button type="submit"
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-      >
-        Sign in
+        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        Send login link
+      </button>
+      <button type="button" onClick={() => setShowPassword(true)}
+        className="w-full text-sm text-gray-500 hover:text-gray-700">
+        Sign in with password
       </button>
     </form>
   )
