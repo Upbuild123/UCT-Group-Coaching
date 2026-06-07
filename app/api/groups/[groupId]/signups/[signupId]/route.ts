@@ -20,7 +20,10 @@ async function recalculateStatus(groupId: string) {
 
   const confirmed = count ?? 0
   const newStatus = confirmed >= group.capacity ? 'full' : 'published'
-  await adminClient.from('group_sessions').update({ status: newStatus }).eq('id', groupId)
+  const { error } = await adminClient.from('group_sessions').update({ status: newStatus }).eq('id', groupId)
+  if (error) {
+    console.error('Failed to recalculate group status:', error)
+  }
 }
 
 export async function DELETE(
@@ -38,12 +41,17 @@ export async function DELETE(
   // Validate signup belongs to this group
   const { data: signup } = await adminClient
     .from('signups')
-    .select('id, student_id, group_session_id')
+    .select('id, student_id, group_session_id, status')
     .eq('id', signupId)
     .eq('group_session_id', groupId)
     .maybeSingle()
 
   if (!signup) return NextResponse.json({ error: 'Signup not found' }, { status: 404 })
+
+  // Check if already canceled
+  if (signup.status === 'canceled') {
+    return NextResponse.json({ error: 'Signup already canceled' }, { status: 409 })
+  }
 
   // Get student email for calendar
   const { data: student } = await adminClient
@@ -52,16 +60,21 @@ export async function DELETE(
     .eq('id', signup.student_id)
     .maybeSingle()
 
-  await adminClient.from('signups').update({ status: 'canceled' }).eq('id', signupId)
-  await recalculateStatus(groupId)
-
-  // Calendar fire-and-forget
+  // Get group info once to avoid extra query
   const { data: group } = await adminClient
     .from('group_sessions')
     .select('calendar_event_id')
     .eq('id', groupId)
     .single()
 
+  const { error: cancelError } = await adminClient.from('signups').update({ status: 'canceled' }).eq('id', signupId)
+  if (cancelError) {
+    return NextResponse.json({ error: 'Failed to cancel signup' }, { status: 500 })
+  }
+
+  await recalculateStatus(groupId)
+
+  // Calendar fire-and-forget
   if (group?.calendar_event_id && student?.email) {
     removeAttendeeFromEvent({
       calendarEventId: group.calendar_event_id,
