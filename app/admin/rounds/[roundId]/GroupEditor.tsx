@@ -16,8 +16,6 @@ interface Signup {
 interface Group {
   id: string
   capacity: number
-  status: string
-  calendar_event_id: string | null
 }
 
 export default function GroupEditor({ group, allStudents }: {
@@ -38,6 +36,10 @@ export default function GroupEditor({ group, allStudents }: {
 
   async function fetchSignups() {
     const res = await fetch(`/api/groups/${group.id}/signups`)
+    if (!res.ok) {
+      setError('Failed to fetch signups')
+      return
+    }
     const data = await res.json()
     setSignups(data.signups ?? [])
   }
@@ -107,7 +109,10 @@ export default function GroupEditor({ group, allStudents }: {
             min={signups.length}
             max={20}
             value={capacity}
-            onChange={e => setCapacity(parseInt(e.target.value))}
+            onChange={e => {
+              const val = parseInt(e.target.value, 10)
+              if (!isNaN(val)) setCapacity(val)
+            }}
             className="border rounded px-2 py-1 text-sm w-20"
           />
           <button

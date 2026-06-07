@@ -34,12 +34,17 @@ export async function GET(
   const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { data: signups } = await adminClient
+  const { data: signups, error } = await adminClient
     .from('signups')
     .select('id, users!student_id(id, name, email)')
     .eq('group_session_id', groupId)
     .eq('status', 'confirmed')
     .order('created_at')
+
+  if (error) {
+    console.error('Failed to fetch signups', error)
+    return NextResponse.json({ error: 'Failed to fetch signups' }, { status: 500 })
+  }
 
   const mapped = (signups ?? []).map((s: any) => ({
     id: s.id,
