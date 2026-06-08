@@ -8,7 +8,8 @@ function LoginForm() {
   const params = useSearchParams()
   const error = params.get('error')
   const sent = params.get('sent')
-  const [showPassword, setShowPassword] = useState(false)
+  const isAdmin = params.get('admin') === '1'
+  const [showPassword, setShowPassword] = useState(isAdmin)
 
   if (sent) {
     return (
@@ -62,10 +63,6 @@ function LoginForm() {
       <button type="submit"
         className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
         Send login link
-      </button>
-      <button type="button" onClick={() => setShowPassword(true)}
-        className="w-full text-sm text-gray-500 hover:text-gray-700">
-        Sign in with password
       </button>
     </form>
   )
