@@ -2,15 +2,13 @@ import 'server-only'
 import { google } from 'googleapis'
 
 function getCalendarClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      subject: process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL,
-    },
+  const jwt = new google.auth.JWT({
+    email: process.env.GOOGLE_CLIENT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     scopes: ['https://www.googleapis.com/auth/calendar'],
+    subject: process.env.GOOGLE_CALENDAR_IMPERSONATE_EMAIL,
   })
-  return google.calendar({ version: 'v3', auth })
+  return google.calendar({ version: 'v3', auth: jwt })
 }
 
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID!
