@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -43,7 +44,7 @@ export default async function AdminDashboard() {
               <div className="flex justify-between"><dt className="text-gray-500">Open seats</dt><dd>{openSeats}</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">Full groups</dt><dd>{fullGroups}</dd></div>
             </dl>
-            <div className="mt-3">
+            <div className="mt-3 flex items-center justify-between">
               <span className={`text-xs px-2 py-1 rounded-full ${
                 round.signup_status === 'open' ? 'bg-green-100 text-green-700' :
                 round.signup_status === 'extra_signups_open' ? 'bg-blue-100 text-blue-700' :
@@ -51,6 +52,7 @@ export default async function AdminDashboard() {
               }`}>
                 {round.signup_status.replace(/_/g, ' ')}
               </span>
+              <Link href={`/admin/rounds/${round.id}`} className="text-xs text-blue-600 hover:underline">Manage →</Link>
             </div>
           </div>
         ))}
