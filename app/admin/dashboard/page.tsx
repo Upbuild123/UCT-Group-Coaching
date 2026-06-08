@@ -18,9 +18,11 @@ export default async function AdminDashboard() {
         const confirmed = (g.signups ?? []).filter((s: any) => s.status === 'confirmed').length
         return acc + Math.max(0, g.capacity - confirmed)
       }, 0)
+    const activeGroups = groups.filter((g: any) => g.status !== 'canceled')
     return {
       round,
-      groupCount: groups.length,
+      publishedGroups: activeGroups.filter((g: any) => g.status === 'published' || g.status === 'full').length,
+      draftGroups: activeGroups.filter((g: any) => g.status === 'draft').length,
       totalSignups,
       openSeats,
       fullGroups: groups.filter((g: any) => g.status === 'full').length,
@@ -31,11 +33,12 @@ export default async function AdminDashboard() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(({ round, groupCount, totalSignups, openSeats, fullGroups }) => (
+        {stats.map(({ round, publishedGroups, draftGroups, totalSignups, openSeats, fullGroups }) => (
           <div key={round.id} className="bg-white rounded-lg shadow p-4">
             <h2 className="font-semibold text-lg mb-3">{round.title}</h2>
             <dl className="space-y-1 text-sm">
-              <div className="flex justify-between"><dt className="text-gray-500">Groups</dt><dd>{groupCount}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Published groups</dt><dd>{publishedGroups}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Draft groups</dt><dd>{draftGroups}</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">Signups</dt><dd>{totalSignups}</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">Open seats</dt><dd>{openSeats}</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">Full groups</dt><dd>{fullGroups}</dd></div>
