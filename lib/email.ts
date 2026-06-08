@@ -167,9 +167,8 @@ export async function sendFullGroupApprovalEmail({
     to: studentEmail,
     subject: `Added: ${requestedGroupTitle}`,
     html: `
-      <p>Your request was approved. You've been added to <strong>${escHtml(requestedGroupTitle)}</strong>.</p>
+      <p>You've been added to <strong>${escHtml(requestedGroupTitle)}</strong>.</p>
       <p><strong>When:</strong> ${escHtml(requestedGroupFormatted)}</p>
-      <p>Your calendar invite will be updated shortly.</p>
     `,
   })
 }
