@@ -30,13 +30,11 @@ export async function sendSignupConfirmationEmail({
   await resend.emails.send({
     from: FROM,
     to: studentEmail,
-    subject: `You're signed up: ${groupTitle}`,
+    subject: `Confirmed: ${groupTitle}`,
     html: `
-      <p>Hi ${studentName},</p>
       <p>You're confirmed for <strong>${groupTitle}</strong>.</p>
       <p><strong>When:</strong> ${startTimeFormatted}</p>
       <p>You'll receive a calendar invite shortly.</p>
-      <p>— Upbuild Coaching</p>
     `,
   })
 }
@@ -60,12 +58,9 @@ export async function sendCancellationNotificationEmail({
   await resend.emails.send({
     from: FROM,
     to: recipients,
-    subject: `Group session canceled: ${groupTitle}`,
+    subject: `Canceled: ${groupTitle}`,
     html: `
-      <p>Hi,</p>
-      <p>The following group coaching session has been <strong>canceled</strong>:</p>
-      <p><strong>${groupTitle}</strong> on ${startTimeFormatted}</p>
-      <p>— Upbuild Coaching</p>
+      <p><strong>${groupTitle}</strong> on ${startTimeFormatted} has been canceled.</p>
     `,
   })
 }
@@ -103,7 +98,6 @@ export async function sendFullGroupRequestNotification({
       ${currentGroupTitle ? `<p><strong>Current group:</strong> ${escHtml(currentGroupTitle)}</p>` : '<p>Student has no current group in this round.</p>'}
       ${reason ? `<p><strong>Reason:</strong> ${escHtml(reason)}</p>` : ''}
       <p><a href="${adminRequestUrl}" style="background:#2563eb;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;">Review Request</a></p>
-      <p>— Upbuild Coaching</p>
     `,
   })
 }
@@ -140,7 +134,6 @@ export async function sendFacilitatorRequestNotification({
     to: facilitatorEmail,
     subject,
     html: `
-      <p>Hi ${escHtml(facilitatorName)},</p>
       <p><strong>${escHtml(studentName)}</strong> is requesting to join a full group.</p>
       <p><strong>Requested group:</strong> ${escHtml(requestedGroupTitle)}<br>
       ${escHtml(requestedGroupFormatted)}<br>
@@ -152,7 +145,6 @@ export async function sendFacilitatorRequestNotification({
         <a href="${rejectUrl}" style="background:#dc2626;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;">Reject</a>
       </p>
       <p style="font-size:12px;color:#6b7280;">Note: The first response wins. You will receive a follow-up once the request is resolved.</p>
-      <p>— Upbuild Coaching</p>
     `,
   })
 }
@@ -173,13 +165,11 @@ export async function sendFullGroupApprovalEmail({
   await resend.emails.send({
     from: FROM,
     to: studentEmail,
-    subject: `You've been added to ${requestedGroupTitle}`,
+    subject: `Added: ${requestedGroupTitle}`,
     html: `
-      <p>Hi ${escHtml(studentName)},</p>
       <p>Your request was approved. You've been added to <strong>${escHtml(requestedGroupTitle)}</strong>.</p>
       <p><strong>When:</strong> ${escHtml(requestedGroupFormatted)}</p>
       <p>Your calendar invite will be updated shortly.</p>
-      <p>— Upbuild Coaching</p>
     `,
   })
 }
@@ -198,9 +188,7 @@ export async function sendFullGroupRejectionEmail({
     to: studentEmail,
     subject: 'Full group request update',
     html: `
-      <p>Hi ${escHtml(studentName)},</p>
       <p>Your request to join <strong>${escHtml(requestedGroupTitle)}</strong> was not approved. You remain in your current group.</p>
-      <p>— Upbuild Coaching</p>
     `,
   })
 }
@@ -223,9 +211,7 @@ export async function sendFacilitatorResolutionEmail({
     to: facilitatorEmail,
     subject: 'Full group request resolved',
     html: `
-      <p>Hi ${escHtml(facilitatorName)},</p>
       <p>The full group request for <strong>${escHtml(studentName)}</strong> to join <strong>${escHtml(requestedGroupTitle)}</strong> has been <strong>${decision}</strong>.</p>
-      <p>— Upbuild Coaching</p>
     `,
   })
 }
