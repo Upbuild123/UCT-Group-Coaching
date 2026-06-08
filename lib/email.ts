@@ -65,7 +65,6 @@ export async function sendCancellationNotificationEmail({
       <p>Hi,</p>
       <p>The following group coaching session has been <strong>canceled</strong>:</p>
       <p><strong>${groupTitle}</strong> with ${facilitatorName} on ${startTimeFormatted}</p>
-      <p>Please contact michael@upbuild.com if you have questions.</p>
       <p>— Upbuild Coaching</p>
     `,
   })
@@ -201,7 +200,6 @@ export async function sendFullGroupRejectionEmail({
     html: `
       <p>Hi ${escHtml(studentName)},</p>
       <p>Your request to join <strong>${escHtml(requestedGroupTitle)}</strong> was not approved. You remain in your current group.</p>
-      <p>Contact ${SUPPORT_EMAIL} if you have questions.</p>
       <p>— Upbuild Coaching</p>
     `,
   })
