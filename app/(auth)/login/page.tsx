@@ -10,6 +10,7 @@ function LoginForm() {
   const sent = params.get('sent')
   const isAdmin = params.get('admin') === '1'
   const [showPassword, setShowPassword] = useState(isAdmin)
+  const [loading, setLoading] = useState(false)
 
   if (sent) {
     return (
@@ -52,7 +53,7 @@ function LoginForm() {
   }
 
   return (
-    <form action={sendMagicLink} className="space-y-4">
+    <form action={sendMagicLink} onSubmit={() => setLoading(true)} className="space-y-4">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
         <input id="email" name="email" type="email" required
@@ -60,9 +61,9 @@ function LoginForm() {
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button type="submit"
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-        Send login link
+      <button type="submit" disabled={loading}
+        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed">
+        {loading ? 'Sending...' : 'Send login link'}
       </button>
     </form>
   )
