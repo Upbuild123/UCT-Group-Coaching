@@ -55,3 +55,37 @@ export function verifyDecisionToken(token: string): DecisionTokenPayload {
   if (payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Token expired')
   return payload
 }
+
+export interface NoShowTokenPayload {
+  signupId: string
+  iat: number
+  exp: number
+}
+
+export function createNoShowToken(signupId: string): string {
+  const header = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const now = Math.floor(Date.now() / 1000)
+  const payload: NoShowTokenPayload = {
+    signupId,
+    iat: now,
+    exp: now + 7 * 24 * 60 * 60,
+  }
+  const body = b64url(JSON.stringify(payload))
+  const sig = signParts(header, body)
+  return `${header}.${body}.${sig}`
+}
+
+export function verifyNoShowToken(token: string): NoShowTokenPayload {
+  const parts = token.split('.')
+  if (parts.length !== 3) throw new Error('Invalid token format')
+  const [header, body, sig] = parts
+  const expected = signParts(header, body)
+  const sigBuf = Buffer.from(sig, 'base64url')
+  const expectedBuf = Buffer.from(expected, 'base64url')
+  if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+    throw new Error('Invalid signature')
+  }
+  const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as NoShowTokenPayload
+  if (payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Token expired')
+  return payload
+}

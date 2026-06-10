@@ -214,6 +214,31 @@ export async function sendSessionReminderEmail({
   })
 }
 
+export async function sendNoShowCheckEmail({
+  facilitatorEmail,
+  groupTitle,
+  startTimeFormatted,
+  students,
+}: {
+  facilitatorEmail: string
+  groupTitle: string
+  startTimeFormatted: string
+  students: { name: string; noShowUrl: string }[]
+}) {
+  await resend.emails.send({
+    from: FROM,
+    to: facilitatorEmail,
+    subject: `Attendance: ${groupTitle}`,
+    html: `
+      <p><strong>${escHtml(groupTitle)}</strong> (${escHtml(startTimeFormatted)}) has ended.</p>
+      <p>Everyone is assumed to have attended. Click a name below if they did <strong>not</strong> show up:</p>
+      <ul>
+        ${students.map(s => `<li><a href="${s.noShowUrl}">${escHtml(s.name)}</a></li>`).join('')}
+      </ul>
+    `,
+  })
+}
+
 export async function sendFacilitatorResolutionEmail({
   facilitatorEmail,
   facilitatorName,

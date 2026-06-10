@@ -9,11 +9,12 @@ export default async function RootPage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, timezone_confirmed')
     .eq('id', user.id)
     .single()
 
   if (profile?.role === 'admin') redirect('/admin/dashboard')
   if (profile?.role === 'facilitator') redirect('/facilitator/dashboard')
+  if (!profile?.timezone_confirmed) redirect('/student/onboarding')
   redirect('/student/signup')
 }
