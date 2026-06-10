@@ -192,6 +192,28 @@ export async function sendFullGroupRejectionEmail({
   })
 }
 
+export async function sendSessionReminderEmail({
+  to,
+  groupTitle,
+  startTimeFormatted,
+}: {
+  to: string[]
+  groupTitle: string
+  startTimeFormatted: string
+}) {
+  if (to.length === 0) return
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Reminder: ${groupTitle} starts in 24 hours`,
+    html: `
+      <p><strong>${escHtml(groupTitle)}</strong> starts in about 24 hours.</p>
+      <p><strong>When:</strong> ${escHtml(startTimeFormatted)}</p>
+    `,
+  })
+}
+
 export async function sendFacilitatorResolutionEmail({
   facilitatorEmail,
   facilitatorName,
