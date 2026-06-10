@@ -22,7 +22,7 @@ export default async function MySessionsPage() {
         <p className="text-gray-400">You haven't signed up for any sessions yet.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {(signups ?? []).map((signup: any) => {
+          {(signups ?? []).filter((signup: any) => signup.group_sessions).map((signup: any) => {
             const group = signup.group_sessions
             return (
               <div key={signup.id} className="bg-white rounded-lg shadow p-4">

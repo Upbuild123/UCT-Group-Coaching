@@ -15,6 +15,7 @@ const TIMEZONES = [
   { label: 'Paris / Berlin (CET)', value: 'Europe/Paris' },
   { label: 'India (IST)', value: 'Asia/Kolkata' },
   { label: 'Japan (JST)', value: 'Asia/Tokyo' },
+  { label: 'Hong Kong (HKT)', value: 'Asia/Hong_Kong' },
   { label: 'Australia/Sydney (AEST)', value: 'Australia/Sydney' },
 ]
 
@@ -153,7 +154,7 @@ export default function SignupPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">Group Coaching Signup</h1>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-500">Your timezone:</label>
@@ -188,7 +189,6 @@ export default function SignupPage() {
             {round.groups.map(group => {
               const isSignedUp = !!group.my_signup_id
               const isFull = group.status === 'full' && !isSignedUp
-              const seatsLeft = group.capacity - group.confirmed_count
 
               return (
                 <div key={group.id} className="bg-white rounded-lg shadow p-4">
@@ -201,9 +201,9 @@ export default function SignupPage() {
                       {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, h:mm a zzz')}
                     </p>
                   )}
-                  <p className="text-sm text-gray-500 mb-3">
-                    {isFull ? 'Full' : `${seatsLeft} seat${seatsLeft !== 1 ? 's' : ''} left`}
-                  </p>
+                  {isFull && (
+                    <p className="text-sm text-gray-500 mb-3">Full</p>
+                  )}
 
                   {isSignedUp ? (
                     <div className="flex gap-2 items-center">
