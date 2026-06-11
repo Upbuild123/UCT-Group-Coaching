@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   if (!baseUrl) return NextResponse.json({ error: 'App URL not configured' }, { status: 500 })
 
   const now = new Date()
-  const windowStart = new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString()
+  const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
 
   const { data: groups } = await adminClient
     .from('group_sessions')
