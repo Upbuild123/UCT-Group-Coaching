@@ -51,25 +51,25 @@ export default async function AttendancePage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold mb-6">Attendance</h1>
-      <div className="bg-white rounded-lg shadow divide-y">
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-6">Attendance</h1>
+      <div className="card divide-y divide-slate-100 p-0">
         {rows.map(row => (
-          <details key={row.email} className="p-4">
-            <summary className="cursor-pointer flex items-center justify-between">
+          <details key={row.email} className="p-4 group">
+            <summary className="cursor-pointer flex items-center justify-between list-none">
               <div>
-                <span className="font-medium">{row.name}</span>
-                <span className="text-gray-400 text-sm ml-2">{row.email}</span>
+                <span className="font-medium text-slate-900">{row.name}</span>
+                <span className="text-slate-400 text-sm ml-2">{row.email}</span>
               </div>
-              <div className="text-sm text-gray-600 flex gap-3">
-                <span className="text-green-700">{row.attendedCount} attended</span>
-                <span className="text-red-600">{row.missedCount} missed</span>
+              <div className="flex gap-2">
+                <span className="badge-green">{row.attendedCount} attended</span>
+                <span className="badge-red">{row.missedCount} missed</span>
               </div>
             </summary>
-            <ul className="mt-3 space-y-1 text-sm">
+            <ul className="mt-3 space-y-1.5 text-sm">
               {row.sessions.map((s, i) => (
                 <li key={i} className="flex items-center justify-between">
-                  <span>{s.roundTitle} — {s.title} — {s.when}</span>
-                  <span className={s.attended ? 'text-green-700' : 'text-red-600'}>
+                  <span className="text-slate-600">{s.roundTitle} — {s.title} — {s.when}</span>
+                  <span className={s.attended ? 'badge-green' : 'badge-red'}>
                     {s.attended ? 'Attended' : 'Missed'}
                   </span>
                 </li>
@@ -78,7 +78,7 @@ export default async function AttendancePage() {
           </details>
         ))}
         {rows.length === 0 && (
-          <p className="p-4 text-gray-400 text-center">No completed sessions yet.</p>
+          <p className="p-4 text-slate-400 text-center">No completed sessions yet.</p>
         )}
       </div>
     </div>

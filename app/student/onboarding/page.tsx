@@ -18,28 +18,27 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow p-6">
-      <h1 className="text-xl font-bold mb-2">Welcome!</h1>
-      <p className="text-sm text-gray-600 mb-4">
+    <div className="max-w-md mx-auto card p-8">
+      <h1 className="text-xl font-bold tracking-tight text-slate-900 mb-2">Welcome!</h1>
+      <p className="text-sm text-slate-600 mb-4">
         Before you get started, please confirm your timezone. This is used to show session times correctly for you.
       </p>
       <form action={confirmTimezone} onSubmit={() => setLoading(true)} className="space-y-4">
         <div>
-          <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">Your timezone</label>
+          <label htmlFor="timezone" className="block text-sm font-medium text-slate-700">Your timezone</label>
           <select
             id="timezone"
             name="timezone"
             value={timezone}
             onChange={e => setTimezone(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            className="input mt-1"
           >
             {TIMEZONES.map(tz => (
               <option key={tz.value} value={tz.value}>{tz.label}</option>
             ))}
           </select>
         </div>
-        <button type="submit" disabled={loading}
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed">
+        <button type="submit" disabled={loading} className="btn-primary w-full">
           {loading ? 'Saving...' : 'Continue'}
         </button>
       </form>

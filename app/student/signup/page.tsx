@@ -133,21 +133,21 @@ export default function SignupPage() {
     setRequestLoading(false)
   }
 
-  if (loading) return <div className="text-center py-12 text-gray-400">Loading...</div>
+  if (loading) return <div className="text-center py-12 text-slate-400">Loading...</div>
 
   const round = rounds[activeRound]
   const modalGroup = modalGroupId ? round?.groups.find(g => g.id === modalGroupId) ?? null : null
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold">Group Coaching Signup</h1>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Group Coaching Signup</h1>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-500">Your timezone:</label>
+          <label className="text-sm text-slate-500">Your timezone:</label>
           <select
             value={myTimezone}
             onChange={e => handleTimezoneChange(e.target.value)}
-            className="border rounded px-2 py-1 text-sm text-gray-700"
+            className="input py-1.5"
           >
             {TIMEZONES.map(tz => (
               <option key={tz.value} value={tz.value}>{tz.label}</option>
@@ -158,7 +158,7 @@ export default function SignupPage() {
       <div className="flex gap-2 mb-6">
         {rounds.map((r, i) => (
           <button key={r.id} onClick={() => setActiveRound(i)}
-            className={`px-4 py-2 rounded text-sm font-medium ${i === activeRound ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${i === activeRound ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}>
             {r.title}
           </button>
         ))}
@@ -167,7 +167,7 @@ export default function SignupPage() {
       {round && (
         <div>
           {round.signup_status === 'closed' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4 text-sm text-yellow-700">
+            <div className="bg-amber-50 ring-1 ring-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-700">
               Signup is currently closed for {round.title}.
             </div>
           )}
@@ -177,87 +177,89 @@ export default function SignupPage() {
               const isFull = group.status === 'full' && !isSignedUp
 
               return (
-                <div key={group.id} className="bg-white rounded-lg shadow p-4">
-                  <h3 className="font-medium mb-1">{group.facilitator_name}</h3>
-                  <p className="text-sm text-gray-500 mb-1">
+                <div key={group.id} className="card flex flex-col">
+                  <h3 className="font-semibold text-slate-900 mb-1">{group.facilitator_name}</h3>
+                  <p className="text-sm text-slate-600 mb-1">
                     {formatInTimeZone(new Date(group.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
                   </p>
                   {myTimezone !== group.original_timezone && (
-                    <p className="text-xs text-gray-400 mb-2">
+                    <p className="text-xs text-slate-400 mb-2">
                       {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, h:mm a zzz')}
                     </p>
                   )}
                   {isFull && (
-                    <p className="text-sm text-gray-500 mb-3">Full</p>
+                    <span className="badge-gray w-fit mb-3">Full</span>
                   )}
 
-                  {isSignedUp ? (
-                    <div className="flex gap-2 items-center">
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">Signed up</span>
-                      <button onClick={() => handleCancel(group.my_signup_id!)}
-                        disabled={actionLoading === group.my_signup_id}
-                        className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">
-                        Cancel
-                      </button>
-                    </div>
-                  ) : isFull ? (
-                    pendingRequests.has(group.id) ? (
-                      <button disabled className="text-xs px-3 py-1 border rounded text-gray-400 cursor-not-allowed">Request pending</button>
+                  <div className="mt-auto pt-2">
+                    {isSignedUp ? (
+                      <div className="flex gap-3 items-center">
+                        <span className="badge-green">Signed up</span>
+                        <button onClick={() => handleCancel(group.my_signup_id!)}
+                          disabled={actionLoading === group.my_signup_id}
+                          className="text-xs text-rose-500 hover:text-rose-700 disabled:opacity-50 transition-colors">
+                          Cancel
+                        </button>
+                      </div>
+                    ) : isFull ? (
+                      pendingRequests.has(group.id) ? (
+                        <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">Request pending</button>
+                      ) : (
+                        <button
+                          onClick={() => { setModalGroupId(group.id); setModalReason(''); setRequestError(null) }}
+                          className="btn-secondary text-xs px-3 py-1.5 text-brand-700 ring-brand-200 hover:bg-brand-50">
+                          Request to join
+                        </button>
+                      )
+                    ) : round.signup_status === 'closed' ? (
+                      <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">Closed</button>
                     ) : (
-                      <button
-                        onClick={() => { setModalGroupId(group.id); setModalReason(''); setRequestError(null) }}
-                        className="text-xs px-3 py-1 border border-blue-500 text-blue-600 rounded hover:bg-blue-50">
-                        Request to join
+                      <button onClick={() => handleSignup(group.id)}
+                        disabled={actionLoading === group.id}
+                        className="btn-primary text-xs px-3 py-1.5">
+                        {actionLoading === group.id ? 'Signing up...' : 'Sign up'}
                       </button>
-                    )
-                  ) : round.signup_status === 'closed' ? (
-                    <button disabled className="text-xs px-3 py-1 border rounded text-gray-400 cursor-not-allowed">Closed</button>
-                  ) : (
-                    <button onClick={() => handleSignup(group.id)}
-                      disabled={actionLoading === group.id}
-                      className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                      {actionLoading === group.id ? 'Signing up...' : 'Sign up'}
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               )
             })}
             {round.groups.length === 0 && (
-              <p className="text-gray-400 text-sm col-span-3">No groups available for this round yet.</p>
+              <p className="text-slate-400 text-sm col-span-3">No groups available for this round yet.</p>
             )}
           </div>
         </div>
       )}
 
       {modalGroup && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
-            <h2 className="font-semibold text-lg mb-1">Request to join full group</h2>
-            <p className="text-sm text-gray-600 mb-4">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <h2 className="font-semibold text-lg mb-1 text-slate-900">Request to join full group</h2>
+            <p className="text-sm text-slate-600 mb-4">
               {modalGroup.facilitator_name} —{' '}
               {formatInTimeZone(new Date(modalGroup.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
             </p>
-            <label className="block text-sm text-gray-600 mb-1">Reason (optional)</label>
+            <label className="block text-sm text-slate-600 mb-1">Reason (optional)</label>
             <textarea
               value={modalReason}
               onChange={e => setModalReason(e.target.value)}
               placeholder="Why do you want to join this group?"
               rows={3}
-              className="w-full border rounded px-3 py-2 text-sm mb-3 resize-none"
+              className="input mb-3 resize-none"
             />
             {requestError && (
-              <p className="text-sm text-red-600 mb-3">{requestError}</p>
+              <p className="text-sm text-rose-600 mb-3">{requestError}</p>
             )}
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setModalGroupId(null)}
-                className="px-4 py-2 text-sm border rounded hover:bg-gray-50">
+                className="btn-secondary">
                 Cancel
               </button>
               <button
                 onClick={() => handleRequest(modalGroupId!)}
                 disabled={requestLoading}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
+                className="btn-primary">
                 {requestLoading ? 'Submitting...' : 'Submit request'}
               </button>
             </div>

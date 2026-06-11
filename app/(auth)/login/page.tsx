@@ -15,9 +15,9 @@ function LoginForm() {
   if (sent) {
     return (
       <div className="text-center space-y-3">
-        <p className="text-gray-700">Check your email</p>
-        <p className="text-sm text-gray-500">We sent a login link to <strong>{sent}</strong>. Click it to sign in.</p>
-        <button onClick={() => window.location.href = '/login'} className="text-sm text-blue-600 hover:underline">
+        <p className="text-slate-700 font-medium">Check your email</p>
+        <p className="text-sm text-slate-500">We sent a login link to <strong>{sent}</strong>. Click it to sign in.</p>
+        <button onClick={() => window.location.href = '/login'} className="text-sm text-brand-600 hover:underline">
           Use a different email
         </button>
       </div>
@@ -28,24 +28,19 @@ function LoginForm() {
     return (
       <form action={login} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-          <input id="email" name="email" type="email" required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
+          <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email</label>
+          <input id="email" name="email" type="email" required className="input mt-1" />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-          <input id="password" name="password" type="password" required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
+          <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
+          <input id="password" name="password" type="password" required className="input mt-1" />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button type="submit"
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        {error && <p className="text-sm text-rose-600">{error}</p>}
+        <button type="submit" className="btn-primary w-full">
           Sign in
         </button>
         <button type="button" onClick={() => setShowPassword(false)}
-          className="w-full text-sm text-gray-500 hover:text-gray-700">
+          className="w-full text-sm text-slate-500 hover:text-slate-700">
           ← Send me a login link instead
         </button>
       </form>
@@ -55,14 +50,11 @@ function LoginForm() {
   return (
     <form action={sendMagicLink} onSubmit={() => setLoading(true)} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-        <input id="email" name="email" type="email" required
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-        />
+        <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email</label>
+        <input id="email" name="email" type="email" required className="input mt-1" />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button type="submit" disabled={loading}
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed">
+      {error && <p className="text-sm text-rose-600">{error}</p>}
+      <button type="submit" disabled={loading} className="btn-primary w-full">
         {loading ? 'Sending...' : 'Send login link'}
       </button>
     </form>
@@ -71,9 +63,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h2 className="text-2xl font-bold text-center">Upbuild Group Coaching</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-900 to-brand-900 px-4">
+      <div className="max-w-md w-full space-y-6 p-8 bg-white rounded-2xl shadow-xl">
+        <div className="text-center space-y-1">
+          <div className="mx-auto h-10 w-10 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-lg">U</div>
+          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Upbuild Group Coaching</h2>
+          <p className="text-sm text-slate-500">Sign in to manage your sessions</p>
+        </div>
         <Suspense>
           <LoginForm />
         </Suspense>
