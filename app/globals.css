@@ -4,15 +4,15 @@
   --background: #f8fafc;
   --foreground: #0f172a;
 
-  /* Upbuild brand palette */
-  --brand-50: #eef2ff;
-  --brand-100: #e0e7ff;
-  --brand-200: #c7d2fe;
-  --brand-400: #818cf8;
-  --brand-500: #6366f1;
-  --brand-600: #4f46e5;
-  --brand-700: #4338ca;
-  --brand-900: #312e81;
+  /* Upbuild brand palette (derived from logo purple #5E328C) */
+  --brand-50: #f5eefa;
+  --brand-100: #e8d9f2;
+  --brand-200: #d0b3e5;
+  --brand-400: #9c66c2;
+  --brand-500: #7c4aa8;
+  --brand-600: #5e328c;
+  --brand-700: #4a2770;
+  --brand-900: #2e1846;
 }
 
 @theme inline {

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { login, sendMagicLink } from './actions'
 
 function LoginForm() {
@@ -65,9 +66,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-900 to-brand-900 px-4">
       <div className="max-w-md w-full space-y-6 p-8 bg-white rounded-2xl shadow-xl">
-        <div className="text-center space-y-1">
-          <div className="mx-auto h-10 w-10 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-lg">U</div>
-          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Upbuild Group Coaching</h2>
+        <div className="text-center space-y-2">
+          <Image src="/logo-color.png" alt="Upbuild" width={160} height={38} className="mx-auto h-9 w-auto" priority />
+          <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Group Coaching</h2>
           <p className="text-sm text-slate-500">Sign in to manage your sessions</p>
         </div>
         <Suspense>

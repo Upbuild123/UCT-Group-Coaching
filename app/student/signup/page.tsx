@@ -73,14 +73,15 @@ export default function SignupPage() {
         .map((g: any) => ({
           id: g.id,
           title: g.title,
-          facilitator_name: g.users?.name ?? '',
+          facilitator_name: (g.users?.name ?? '').split(' ')[0],
           start_time_utc: g.start_time_utc,
           original_timezone: g.original_timezone,
           capacity: g.capacity,
           status: g.status,
           confirmed_count: (g.signups ?? []).filter((s: any) => s.status === 'confirmed').length,
           my_signup_id: (g.signups ?? []).find((s: any) => s.student_id === userId && s.status === 'confirmed')?.id ?? null,
-        })),
+        }))
+        .sort((a: any, b: any) => a.start_time_utc.localeCompare(b.start_time_utc)),
     }))
 
     // Load pending full group requests for this student
@@ -139,8 +140,8 @@ export default function SignupPage() {
   const modalGroup = modalGroupId ? round?.groups.find(g => g.id === modalGroupId) ?? null : null
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+    <div className="max-w-2xl">
+      <div className="flex items-center gap-4 mb-6 flex-wrap">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Group Coaching Signup</h1>
         <div className="flex items-center gap-2">
           <label className="text-sm text-slate-500">Your timezone:</label>
@@ -171,14 +172,15 @@ export default function SignupPage() {
               Signup is currently closed for {round.title}.
             </div>
           )}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {round.groups.map(group => {
               const isSignedUp = !!group.my_signup_id
               const isFull = group.status === 'full' && !isSignedUp
 
               return (
                 <div key={group.id} className="card flex flex-col">
-                  <h3 className="font-semibold text-slate-900 mb-1">{group.facilitator_name}</h3>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">Facilitator</p>
+                  <h3 className="font-semibold text-slate-900 mb-2">{group.facilitator_name}</h3>
                   <p className="text-sm text-slate-600 mb-1">
                     {formatInTimeZone(new Date(group.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
                   </p>
@@ -191,14 +193,19 @@ export default function SignupPage() {
                     <span className="badge-gray w-fit mb-3">Full</span>
                   )}
 
-                  <div className="mt-auto pt-2">
+                  <div className="mt-auto pt-3">
                     {isSignedUp ? (
-                      <div className="flex gap-3 items-center">
-                        <span className="badge-green">Signed up</span>
+                      <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Registered
+                        </span>
                         <button onClick={() => handleCancel(group.my_signup_id!)}
                           disabled={actionLoading === group.my_signup_id}
-                          className="text-xs text-rose-500 hover:text-rose-700 disabled:opacity-50 transition-colors">
-                          Cancel
+                          className="text-xs text-slate-400 hover:text-rose-600 disabled:opacity-50 transition-colors">
+                          {actionLoading === group.my_signup_id ? 'Withdrawing...' : 'Withdraw'}
                         </button>
                       </div>
                     ) : isFull ? (
@@ -217,7 +224,7 @@ export default function SignupPage() {
                       <button onClick={() => handleSignup(group.id)}
                         disabled={actionLoading === group.id}
                         className="btn-primary text-xs px-3 py-1.5">
-                        {actionLoading === group.id ? 'Signing up...' : 'Sign up'}
+                        {actionLoading === group.id ? 'Registering...' : 'Register'}
                       </button>
                     )}
                   </div>
@@ -225,7 +232,7 @@ export default function SignupPage() {
               )
             })}
             {round.groups.length === 0 && (
-              <p className="text-slate-400 text-sm col-span-3">No groups available for this round yet.</p>
+              <p className="text-slate-400 text-sm col-span-2">No groups available for this round yet.</p>
             )}
           </div>
         </div>
