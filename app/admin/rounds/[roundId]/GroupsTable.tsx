@@ -37,15 +37,15 @@ export default function GroupsTable({
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="card p-0 overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="border-b">
+        <thead className="border-b border-slate-100">
           <tr>
-            <th className="text-left p-4 font-medium text-gray-600">Facilitator</th>
-            <th className="text-left p-4 font-medium text-gray-600">Date / Time</th>
-            <th className="text-left p-4 font-medium text-gray-600">Capacity</th>
-            <th className="text-left p-4 font-medium text-gray-600">Signups</th>
-            <th className="text-left p-4 font-medium text-gray-600">Status</th>
+            <th className="text-left p-4 font-medium text-slate-500">Facilitator</th>
+            <th className="text-left p-4 font-medium text-slate-500">Date / Time</th>
+            <th className="text-left p-4 font-medium text-slate-500">Capacity</th>
+            <th className="text-left p-4 font-medium text-slate-500">Signups</th>
+            <th className="text-left p-4 font-medium text-slate-500">Status</th>
             <th className="p-4"></th>
           </tr>
         </thead>
@@ -55,19 +55,19 @@ export default function GroupsTable({
             const isExpanded = expandedId === group.id
             return (
               <React.Fragment key={group.id}>
-                <tr className="border-b">
-                  <td className="p-4">{group.users?.name}</td>
-                  <td className="p-4">
+                <tr className="border-b border-slate-100">
+                  <td className="p-4 text-slate-900">{group.users?.name}</td>
+                  <td className="p-4 text-slate-600">
                     {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, yyyy h:mm a zzz')}
                   </td>
-                  <td className="p-4">{group.capacity}</td>
-                  <td className="p-4">{confirmed} / {group.capacity}</td>
+                  <td className="p-4 text-slate-600">{group.capacity}</td>
+                  <td className="p-4 text-slate-600">{confirmed} / {group.capacity}</td>
                   <td className="p-4">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      group.status === 'published' ? 'bg-green-100 text-green-700' :
-                      group.status === 'full' ? 'bg-orange-100 text-orange-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
+                    <span className={
+                      group.status === 'published' ? 'badge-green' :
+                      group.status === 'full' ? 'badge-brand' :
+                      'badge-gray'
+                    }>
                       {group.status}
                     </span>
                   </td>
@@ -75,17 +75,17 @@ export default function GroupsTable({
                     <div className="flex gap-3 items-center">
                       {group.status === 'draft' && (
                         <form action={publishGroup.bind(null, group.id)}>
-                          <button type="submit" className="text-xs text-green-600 hover:text-green-800">Publish</button>
+                          <button type="submit" className="text-xs text-emerald-600 hover:text-emerald-700">Publish</button>
                         </form>
                       )}
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : group.id)}
-                        className="text-xs text-blue-600 hover:text-blue-800"
+                        className="text-xs text-brand-600 hover:text-brand-700"
                       >
                         {isExpanded ? 'Done' : 'Edit'}
                       </button>
                       <form action={cancelGroup.bind(null, group.id)}>
-                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Remove group</button>
+                        <button type="submit" className="text-xs text-slate-400 hover:text-rose-600 transition-colors">Remove group</button>
                       </form>
                     </div>
                   </td>
@@ -101,7 +101,7 @@ export default function GroupsTable({
             )
           })}
           {groups.length === 0 && (
-            <tr><td colSpan={6} className="p-4 text-gray-400 text-center">No groups yet</td></tr>
+            <tr><td colSpan={6} className="p-4 text-slate-400 text-center">No groups yet</td></tr>
           )}
         </tbody>
       </table>

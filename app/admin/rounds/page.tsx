@@ -18,41 +18,41 @@ export default async function RoundsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Rounds</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-6">Rounds</h1>
       <GroupParser facilitators={facilitators ?? []} />
-      <div className="space-y-4">
+      <div className="space-y-3">
         {(rounds ?? []).map((round: any) => (
-          <div key={round.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+          <div key={round.id} className="card flex items-center justify-between">
             <div>
-              <h2 className="font-semibold">{round.title}</h2>
-              <p className="text-sm text-gray-500">{(round.group_sessions ?? []).filter((g: any) => g.status === 'published' || g.status === 'full').length} groups</p>
+              <h2 className="font-semibold text-slate-900">{round.title}</h2>
+              <p className="text-sm text-slate-500">{(round.group_sessions ?? []).filter((g: any) => g.status === 'published' || g.status === 'full').length} groups</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                round.signup_status === 'open' ? 'bg-green-100 text-green-700' :
-                round.signup_status === 'extra_signups_open' ? 'bg-blue-100 text-blue-700' :
-                'bg-gray-100 text-gray-600'
-              }`}>
+              <span className={
+                round.signup_status === 'open' ? 'badge-green' :
+                round.signup_status === 'extra_signups_open' ? 'badge-brand' :
+                'badge-gray'
+              }>
                 {round.signup_status.replace(/_/g, ' ')}
               </span>
               <div className="flex gap-2">
                 {round.signup_status !== 'open' && (
                   <form action={updateSignupStatus.bind(null, round.id, 'open')}>
-                    <button className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700">Open Signup</button>
+                    <button className="btn-secondary text-xs px-3 py-1.5">Open Signup</button>
                   </form>
                 )}
                 {round.signup_status !== 'closed' && (
                   <form action={updateSignupStatus.bind(null, round.id, 'closed')}>
-                    <button className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">Close Signup</button>
+                    <button className="btn-secondary text-xs px-3 py-1.5">Close Signup</button>
                   </form>
                 )}
                 {round.signup_status === 'open' && (
                   <form action={updateSignupStatus.bind(null, round.id, 'extra_signups_open')}>
-                    <button className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Enable Extra</button>
+                    <button className="btn-primary text-xs px-3 py-1.5">Enable Extra</button>
                   </form>
                 )}
               </div>
-              <Link href={`/admin/rounds/${round.id}`} className="text-sm text-blue-600 hover:underline">Manage →</Link>
+              <Link href={`/admin/rounds/${round.id}`} className="text-sm font-medium text-brand-600 hover:underline">Manage →</Link>
             </div>
           </div>
         ))}

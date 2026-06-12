@@ -24,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <button type="submit" className="nav-link">Sign out</button>
         </form>
       </nav>
-      <main className="p-6 max-w-6xl mx-auto">{children}</main>
+      <main className="p-6 max-w-4xl mx-auto">{children}</main>
     </div>
   )
 }

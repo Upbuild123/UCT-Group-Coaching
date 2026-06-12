@@ -58,79 +58,77 @@ export default async function AdminRequestPage({
 
   return (
     <div className="max-w-xl">
-      <h1 className="text-2xl font-bold mb-6">Full Group Request</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-6">Full Group Request</h1>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6 space-y-4">
+      <div className="card mb-6 space-y-4">
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Student</p>
-          <p className="font-medium">{student.name}</p>
-          <p className="text-sm text-gray-500">{student.email}</p>
+          <p className="text-xs text-slate-400 uppercase tracking-wide">Student</p>
+          <p className="font-medium text-slate-900">{student.name}</p>
+          <p className="text-sm text-slate-500">{student.email}</p>
         </div>
 
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Requested Group</p>
-          <p className="font-medium">{requestedGroup.title}</p>
-          <p className="text-sm text-gray-500">{requestedFormatted}</p>
-          <p className="text-sm text-gray-500">Facilitator: {requestedFacilitator?.name}</p>
-          <p className="text-sm text-gray-500">Roster: {requestedCount}/{requestedGroup.capacity}</p>
+          <p className="text-xs text-slate-400 uppercase tracking-wide">Requested Group</p>
+          <p className="font-medium text-slate-900">{requestedGroup.title}</p>
+          <p className="text-sm text-slate-500">{requestedFormatted}</p>
+          <p className="text-sm text-slate-500">Facilitator: {requestedFacilitator?.name}</p>
+          <p className="text-sm text-slate-500">Roster: {requestedCount}/{requestedGroup.capacity}</p>
         </div>
 
         {currentGroup ? (
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Current Group</p>
-            <p className="font-medium">{currentGroup.title}</p>
-            <p className="text-sm text-gray-500">{currentFormatted}</p>
-            <p className="text-sm text-gray-500">Facilitator: {currentFacilitator?.name}</p>
-            <p className="text-sm text-gray-500">Roster: {currentCount}/{currentGroup.capacity}</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide">Current Group</p>
+            <p className="font-medium text-slate-900">{currentGroup.title}</p>
+            <p className="text-sm text-slate-500">{currentFormatted}</p>
+            <p className="text-sm text-slate-500">Facilitator: {currentFacilitator?.name}</p>
+            <p className="text-sm text-slate-500">Roster: {currentCount}/{currentGroup.capacity}</p>
           </div>
         ) : (
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Current Group</p>
-            <p className="text-sm text-gray-500">None — student has no current group in this round</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide">Current Group</p>
+            <p className="text-sm text-slate-500">None — student has no current group in this round</p>
           </div>
         )}
 
         {fgr.reason && (
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Student's Reason</p>
-            <p className="text-sm">{fgr.reason}</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide">Student's Reason</p>
+            <p className="text-sm text-slate-700">{fgr.reason}</p>
           </div>
         )}
 
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Status</p>
-          <p className="text-sm font-medium capitalize">{fgr.status}</p>
+          <p className="text-xs text-slate-400 uppercase tracking-wide">Status</p>
+          <p className="text-sm font-medium text-slate-900 capitalize">{fgr.status}</p>
         </div>
       </div>
 
       {alreadyResolved ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm text-yellow-700">
+        <div className="rounded-lg p-4 text-sm bg-amber-50 text-amber-700 ring-1 ring-amber-200">
           This request has already been {fgr.status}.
         </div>
       ) : (
-        <form method="POST" action={`/admin/requests/${id}/decide`} className="bg-white rounded-lg shadow p-6 space-y-4">
+        <form method="POST" action={`/admin/requests/${id}/decide`} className="card space-y-4">
           <div>
-            <p className="font-medium mb-2">Decision</p>
-            <label className="flex items-center gap-2 mb-2">
+            <p className="font-medium text-slate-900 mb-2">Decision</p>
+            <label className="flex items-center gap-2 mb-2 text-sm text-slate-700">
               <input type="radio" name="decision" value="approved" required /> Approve
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm text-slate-700">
               <input type="radio" name="decision" value="rejected" required /> Reject
             </label>
           </div>
 
           {currentGroup && (
             <div>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input type="checkbox" name="keepCurrentSlot" value="true" />
                 Keep student in their current group (treat new group as additional signup)
               </label>
             </div>
           )}
 
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+          <button type="submit" className="btn-primary text-sm">
             Submit Decision
           </button>
         </form>

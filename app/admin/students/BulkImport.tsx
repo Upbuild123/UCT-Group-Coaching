@@ -45,9 +45,9 @@ export default function BulkImport() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mb-6 p-4">
-      <h2 className="font-medium mb-1">Bulk Import Students</h2>
-      <p className="text-xs text-gray-400 mb-3">Paste a list of names and emails — one per line, separated by a tab or spaces.</p>
+    <div className="card mb-6">
+      <h2 className="font-medium text-slate-900 mb-1">Bulk Import Students</h2>
+      <p className="text-xs text-slate-400 mb-3">Paste a list of names and emails — one per line, separated by a tab or spaces.</p>
 
       {step === 'paste' && (
         <>
@@ -56,12 +56,12 @@ export default function BulkImport() {
             onChange={e => { setText(e.target.value); setStatus(null) }}
             rows={6}
             placeholder={"Anna Knight\tanna.knight@example.com\nJay Gopal\tjay@example.com"}
-            className="w-full border rounded px-3 py-2 text-sm font-mono mb-3"
+            className="input font-mono mb-3"
           />
           <button
             onClick={handlePreview}
             disabled={!text.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+            className="btn-primary text-sm"
           >
             Preview ({parseStudentText(text).length} students)
           </button>
@@ -70,31 +70,29 @@ export default function BulkImport() {
 
       {step === 'preview' && (
         <>
-          <div className="border rounded mb-3 max-h-48 overflow-y-auto">
+          <div className="border border-slate-200 rounded-lg mb-3 max-h-48 overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="border-b bg-gray-50">
+              <thead className="border-b border-slate-100 bg-slate-50">
                 <tr>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">Name</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">Email</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500">Name</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500">Email</th>
                 </tr>
               </thead>
               <tbody>
                 {preview.map((s, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="px-3 py-2">{s.name}</td>
-                    <td className="px-3 py-2 text-gray-600">{s.email}</td>
+                  <tr key={i} className="border-b border-slate-100 last:border-0">
+                    <td className="px-3 py-2 text-slate-900">{s.name}</td>
+                    <td className="px-3 py-2 text-slate-500">{s.email}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setStep('paste')}
-              className="px-4 py-2 border rounded text-sm hover:bg-gray-50">
+            <button onClick={() => setStep('paste')} className="btn-secondary text-sm">
               Back
             </button>
-            <button onClick={handleImport} disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={handleImport} disabled={loading} className="btn-primary text-sm">
               {loading ? 'Importing...' : `Import ${preview.length} students`}
             </button>
           </div>
@@ -102,7 +100,7 @@ export default function BulkImport() {
       )}
 
       {status && (
-        <div className={`mt-3 text-sm rounded p-3 ${status.errors.length === 0 ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-800'}`}>
+        <div className={`mt-3 text-sm rounded-lg p-3 ${status.errors.length === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
           <p className="font-medium">Imported {status.imported} student{status.imported !== 1 ? 's' : ''}.</p>
           {status.errors.length > 0 && (
             <ul className="mt-1 list-disc list-inside space-y-1">

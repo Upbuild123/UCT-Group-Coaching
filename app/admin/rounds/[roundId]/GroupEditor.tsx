@@ -97,12 +97,12 @@ export default function GroupEditor({ group, allStudents }: {
   )
 
   return (
-    <div className="border-t bg-gray-50 px-4 py-4 space-y-6">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <div className="border-t border-slate-100 bg-slate-50 px-4 py-4 space-y-6">
+      {error && <p className="text-sm text-rose-600">{error}</p>}
 
       {/* Capacity */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Capacity</h4>
+        <h4 className="text-sm font-medium text-slate-700 mb-2">Capacity</h4>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -113,12 +113,12 @@ export default function GroupEditor({ group, allStudents }: {
               const val = parseInt(e.target.value, 10)
               if (!isNaN(val)) setCapacity(val)
             }}
-            className="border rounded px-2 py-1 text-sm w-20"
+            className="input w-20"
           />
           <button
             onClick={saveCapacity}
             disabled={capacityLoading}
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+            className="btn-primary text-sm px-3 py-1.5"
           >
             {capacityLoading ? 'Saving...' : 'Save'}
           </button>
@@ -127,16 +127,16 @@ export default function GroupEditor({ group, allStudents }: {
 
       {/* Members */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Members ({signups.length})</h4>
-        {signups.length === 0 && <p className="text-sm text-gray-400 mb-3">No members yet.</p>}
+        <h4 className="text-sm font-medium text-slate-700 mb-2">Members ({signups.length})</h4>
+        {signups.length === 0 && <p className="text-sm text-slate-400 mb-3">No members yet.</p>}
         <ul className="space-y-1 mb-4">
           {signups.map(s => (
-            <li key={s.id} className="flex items-center justify-between text-sm py-1 border-b last:border-0">
-              <span>{s.student.name} <span className="text-gray-400">({s.student.email})</span></span>
+            <li key={s.id} className="flex items-center justify-between text-sm py-1 border-b border-slate-100 last:border-0">
+              <span className="text-slate-700">{s.student.name} <span className="text-slate-400">({s.student.email})</span></span>
               <button
                 onClick={() => removeStudent(s.id)}
                 disabled={loading}
-                className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                className="text-xs text-slate-400 hover:text-rose-600 disabled:opacity-50 transition-colors"
               >
                 Remove
               </button>
@@ -145,24 +145,24 @@ export default function GroupEditor({ group, allStudents }: {
         </ul>
 
         {/* Add student */}
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Add student</h4>
+        <h4 className="text-sm font-medium text-slate-700 mb-2">Add student</h4>
         <div className="flex gap-2">
           <div className="flex-1">
             <input
               placeholder="Search by name or email..."
               value={search}
               onChange={e => { setSearch(e.target.value); setSelectedStudentId('') }}
-              className="border rounded px-2 py-1 text-sm w-full mb-1"
+              className="input mb-1"
             />
             {search && availableStudents.length > 0 && (
-              <ul className="border rounded bg-white shadow-sm max-h-40 overflow-y-auto">
+              <ul className="border border-slate-200 rounded-lg bg-white shadow-sm max-h-40 overflow-y-auto">
                 {availableStudents.slice(0, 10).map(s => (
                   <li key={s.id}>
                     <button
                       onClick={() => { setSelectedStudentId(s.id); setSearch(s.name) }}
-                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50"
+                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 text-slate-700"
                     >
-                      {s.name} <span className="text-gray-400">({s.email})</span>
+                      {s.name} <span className="text-slate-400">({s.email})</span>
                     </button>
                   </li>
                 ))}
@@ -172,7 +172,7 @@ export default function GroupEditor({ group, allStudents }: {
           <button
             onClick={addStudent}
             disabled={!selectedStudentId || loading}
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50 self-start"
+            className="btn-primary text-sm px-3 py-1.5 self-start"
           >
             Add
           </button>

@@ -103,24 +103,23 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)}
-        className="mb-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">
+      <button onClick={() => setOpen(true)} className="btn-primary mb-6 text-sm">
         + Add Groups
       </button>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mb-6 p-4">
+    <div className="card mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-medium">Add Groups</h2>
+        <h2 className="font-medium text-slate-900">Add Groups</h2>
         <button onClick={() => { setOpen(false); setStep('paste') }}
-          className="text-xs text-gray-400 hover:text-gray-600">Dismiss</button>
+          className="text-xs text-slate-400 hover:text-slate-600">Dismiss</button>
       </div>
 
       {step === 'paste' && (
         <>
-          <p className="text-xs text-gray-400 mb-3">
+          <p className="text-xs text-slate-400 mb-3">
             Paste names and dates — round numbers are assigned by order. Include instructions like "change all to capacity 5" anywhere in the text.
           </p>
           <textarea
@@ -128,11 +127,10 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
             onChange={e => setText(e.target.value)}
             rows={8}
             placeholder={`Gina Nov 12. 5:30 pm ET\nDec 3. 12 pm ET\nDec 11 2 pm ET\nJan 7 5:30 ET\n\nVipin Nov 14 10am ET\nDec 5 2pm ET\n...`}
-            className="w-full border rounded px-3 py-2 text-sm font-mono mb-3"
+            className="input font-mono mb-3"
           />
-          {parseError && <p className="text-red-500 text-sm mb-2">{parseError}</p>}
-          <button onClick={() => handleParse()} disabled={!text.trim() || parsing}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+          {parseError && <p className="text-rose-600 text-sm mb-2">{parseError}</p>}
+          <button onClick={() => handleParse()} disabled={!text.trim() || parsing} className="btn-primary text-sm">
             {parsing ? 'Parsing...' : 'Parse'}
           </button>
         </>
@@ -140,29 +138,29 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
 
       {step === 'confirm' && (
         <>
-          <div className="border rounded mb-4 overflow-x-auto">
+          <div className="border border-slate-200 rounded-lg mb-4 overflow-x-auto">
             <table className="text-sm w-full">
-              <thead className="border-b bg-gray-50">
+              <thead className="border-b border-slate-100 bg-slate-50">
                 <tr>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600 whitespace-nowrap">Round</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">Facilitator</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600 whitespace-nowrap">Date & Time</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600 w-16">Cap.</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">Title</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500 whitespace-nowrap">Round</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500">Facilitator</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500 whitespace-nowrap">Date & Time</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500 w-16">Cap.</th>
+                  <th className="text-left px-3 py-2 font-medium text-slate-500">Title</th>
                 </tr>
               </thead>
               <tbody>
                 {slots.map((slot, i) => (
-                  <tr key={i} className="border-b last:border-0">
+                  <tr key={i} className="border-b border-slate-100 last:border-0">
                     <td className="px-3 py-1.5">
                       <select value={slot.roundNumber} onChange={e => updateSlot(i, 'roundNumber', parseInt(e.target.value))}
-                        className="border rounded px-2 py-1 text-sm w-24">
+                        className="input py-1 w-24">
                         {[1,2,3,4].map(n => <option key={n} value={n}>Round {n}</option>)}
                       </select>
                     </td>
                     <td className="px-3 py-1.5">
                       <select value={slot.facilitatorId} onChange={e => updateSlot(i, 'facilitatorId', e.target.value)}
-                        className="border rounded px-2 py-1 text-sm">
+                        className="input py-1">
                         <option value="">-- select --</option>
                         {facilitators.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                       </select>
@@ -170,16 +168,16 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
                     <td className="px-3 py-1.5 whitespace-nowrap">
                       <input type="datetime-local" value={slot.dateTimeLocal}
                         onChange={e => updateSlot(i, 'dateTimeLocal', e.target.value)}
-                        className="border rounded px-2 py-1 text-sm" />
+                        className="input py-1" />
                     </td>
                     <td className="px-3 py-1.5">
                       <input type="number" min={1} max={20} value={slot.capacity}
                         onChange={e => updateSlot(i, 'capacity', parseInt(e.target.value))}
-                        className="border rounded px-2 py-1 text-sm w-16" />
+                        className="input py-1 w-16" />
                     </td>
                     <td className="px-3 py-1.5">
                       <input value={slot.title} onChange={e => updateSlot(i, 'title', e.target.value)}
-                        className="border rounded px-2 py-1 text-sm w-64" />
+                        className="input py-1 w-64" />
                     </td>
                   </tr>
                 ))}
@@ -192,20 +190,19 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
               value={adjustment}
               onChange={e => setAdjustment(e.target.value)}
               placeholder='e.g. "change all groups to capacity 5" or "set Gina to capacity 4"'
-              className="border rounded px-3 py-2 text-sm flex-1"
+              className="input flex-1"
             />
-            <button onClick={handleAdjust} disabled={!adjustment.trim() || parsing}
-              className="px-4 py-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50 whitespace-nowrap">
+            <button onClick={handleAdjust} disabled={!adjustment.trim() || parsing} className="btn-secondary text-sm whitespace-nowrap">
               {parsing ? 'Applying...' : 'Apply'}
             </button>
           </div>
-          {parseError && <p className="text-red-500 text-sm mb-2">{parseError}</p>}
+          {parseError && <p className="text-rose-600 text-sm mb-2">{parseError}</p>}
 
           <div className="flex gap-3">
-            <button onClick={() => setStep('paste')} className="px-4 py-2 border rounded text-sm hover:bg-gray-50">Back</button>
+            <button onClick={() => setStep('paste')} className="btn-secondary text-sm">Back</button>
             <button onClick={handleConfirm}
               disabled={submitting || slots.some(s => !s.facilitatorId)}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+              className="btn-primary text-sm">
               {submitting ? 'Creating...' : `Create ${slots.length} group${slots.length !== 1 ? 's' : ''}`}
             </button>
           </div>

@@ -32,15 +32,14 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{round.title} — Groups</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{round.title} — Groups</h1>
         <div className="flex gap-2">
           <form action={publishAllDraftGroups.bind(null, roundId)}>
-            <button type="submit" className="px-4 py-2 border border-green-600 text-green-700 rounded hover:bg-green-50 text-sm">
+            <button type="submit" className="btn-secondary text-sm">
               Publish all drafts
             </button>
           </form>
-          <Link href={`/admin/rounds/${roundId}/new`}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+          <Link href={`/admin/rounds/${roundId}/new`} className="btn-primary text-sm">
             + Add Groups
           </Link>
         </div>
