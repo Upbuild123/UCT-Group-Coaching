@@ -103,7 +103,7 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="btn-primary mb-6 text-sm">
+      <button onClick={() => setOpen(true)} className="btn-primary mb-6 mr-2 text-sm">
         + Add Groups
       </button>
     )

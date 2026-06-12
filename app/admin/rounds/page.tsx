@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { updateSignupStatus } from './actions'
 import Link from 'next/link'
 import GroupParser from './GroupParser'
+import ManualAddGroup from './ManualAddGroup'
 
 export default async function RoundsPage() {
   const supabase = await createClient()
@@ -20,6 +21,7 @@ export default async function RoundsPage() {
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-6">Rounds</h1>
       <GroupParser facilitators={facilitators ?? []} />
+      <ManualAddGroup facilitators={facilitators ?? []} />
       <div className="space-y-3">
         {(rounds ?? []).map((round: any) => (
           <div key={round.id} className="card flex items-center justify-between">
