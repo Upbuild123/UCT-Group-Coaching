@@ -26,8 +26,8 @@ export default async function FacilitatorDashboard() {
               <div key={group.id} className="card">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="text-xs text-slate-400">{group.rounds?.title}</p>
-                    <h2 className="font-semibold text-slate-900">{group.title}</h2>
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">{group.rounds?.title}</p>
+                    <h2 className="font-semibold text-slate-900">{group.title.replace(/^Group Coaching Round \d+\s*/i, '')}</h2>
                     <p className="text-sm text-slate-500 mt-1">
                       {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, yyyy h:mm a zzz')}
                     </p>
