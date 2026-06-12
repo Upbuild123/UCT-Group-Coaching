@@ -3,7 +3,6 @@ export const TIMEZONES = [
   { label: 'Central (CT)', value: 'America/Chicago' },
   { label: 'Mountain (MT)', value: 'America/Denver' },
   { label: 'Pacific (PT)', value: 'America/Los_Angeles' },
-  { label: 'Alaska (AKT)', value: 'America/Anchorage' },
   { label: 'Hawaii (HT)', value: 'Pacific/Honolulu' },
   { label: 'London (GMT/BST)', value: 'Europe/London' },
   { label: 'Paris / Berlin (CET)', value: 'Europe/Paris' },
