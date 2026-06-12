@@ -36,6 +36,7 @@ export async function cancelGroup(groupId: string) {
     .single()
 
   if (!group) return
+  if (group.status === 'canceled') return
 
   await adminClient.from('group_sessions').update({ status: 'canceled' }).eq('id', groupId)
 

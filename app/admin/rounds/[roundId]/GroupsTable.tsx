@@ -35,6 +35,7 @@ export default function GroupsTable({
   publishGroup: (groupId: string) => Promise<void>
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [cancelingId, setCancelingId] = useState<string | null>(null)
 
   return (
     <div className="card p-0 overflow-hidden">
@@ -84,8 +85,14 @@ export default function GroupsTable({
                       >
                         {isExpanded ? 'Done' : 'Edit'}
                       </button>
-                      <form action={cancelGroup.bind(null, group.id)}>
-                        <button type="submit" className="text-xs text-slate-400 hover:text-rose-600 transition-colors">Remove group</button>
+                      <form action={cancelGroup.bind(null, group.id)} onSubmit={() => setCancelingId(group.id)}>
+                        <button
+                          type="submit"
+                          disabled={cancelingId === group.id}
+                          className="text-xs text-slate-400 hover:text-rose-600 disabled:opacity-50 transition-colors"
+                        >
+                          {cancelingId === group.id ? 'Removing...' : 'Remove group'}
+                        </button>
                       </form>
                     </div>
                   </td>
