@@ -8,5 +8,4 @@ export const TIMEZONES = [
   { label: 'India (IST)', value: 'Asia/Kolkata' },
   { label: 'Japan (JST)', value: 'Asia/Tokyo' },
   { label: 'Hong Kong (HKT)', value: 'Asia/Hong_Kong' },
-  { label: 'Australia/Sydney (AEST)', value: 'Australia/Sydney' },
 ]
