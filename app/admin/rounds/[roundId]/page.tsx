@@ -17,6 +17,11 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
 
   if (!round) notFound()
 
+  const { data: allRounds } = await supabase
+    .from('rounds')
+    .select('id, round_number, title')
+    .order('round_number')
+
   const { data: groups } = await supabase
     .from('group_sessions')
     .select('*, users!facilitator_id(name), signups(id, status)')
@@ -31,7 +36,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{round.title} — Groups</h1>
         <div className="flex gap-2">
           <form action={publishAllDraftGroups.bind(null, roundId)}>
@@ -43,6 +48,17 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ ro
             + Add Groups
           </Link>
         </div>
+      </div>
+      <div className="flex gap-2 mb-6">
+        {(allRounds ?? []).map((r: any) => (
+          <Link
+            key={r.id}
+            href={`/admin/rounds/${r.id}`}
+            className={r.id === roundId ? 'btn-primary text-xs px-3 py-1.5' : 'btn-secondary text-xs px-3 py-1.5'}
+          >
+            {r.title}
+          </Link>
+        ))}
       </div>
       <GroupsTable
         groups={(groups ?? []).filter((g: any) => g.status !== 'canceled')}
