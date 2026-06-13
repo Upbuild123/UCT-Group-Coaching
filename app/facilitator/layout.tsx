@@ -13,7 +13,7 @@ export default async function FacilitatorLayout({ children }: { children: React.
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-slate-900 px-6 py-3 flex items-center gap-6">
+      <nav className="bg-slate-900 px-4 sm:px-6 py-3 flex items-center gap-4 sm:gap-6 flex-wrap">
         <Image src="/logo-white.png" alt="Upbuild" width={120} height={29} className="h-7 w-auto" priority />
         <div className="ml-auto flex items-center gap-4">
           <span className="text-sm text-slate-400">{profile.name}</span>
