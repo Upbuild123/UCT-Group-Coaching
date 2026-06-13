@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     .from('group_sessions')
     .select(`
       id, title, start_time_utc,
-      users!facilitator_id(email, timezone),
+      users!facilitator_id(email, timezone, zoom_link),
       signups(status, users!student_id(email, timezone))
     `)
     .in('status', ['published', 'full'])
@@ -26,9 +26,11 @@ export async function GET(request: Request) {
     .lte('start_time_utc', windowEnd)
 
   for (const group of groups ?? []) {
+    const facilitator = group.users as any
+    const zoomLink = facilitator?.zoom_link ?? null
     const recipients: { email: string; timezone: string }[] = []
 
-    if (group.users) recipients.push(group.users as any)
+    if (facilitator) recipients.push(facilitator)
 
     for (const signup of (group.signups ?? []) as any[]) {
       if (signup.status === 'confirmed' && signup.users) recipients.push(signup.users)
@@ -39,6 +41,7 @@ export async function GET(request: Request) {
         to: [recipient.email],
         groupTitle: group.title,
         startTimeFormatted: formatInTimeZone(new Date(group.start_time_utc), recipient.timezone, 'MMM d, yyyy h:mm a zzz'),
+        zoomLink,
       })
     }
 

@@ -196,10 +196,12 @@ export async function sendSessionReminderEmail({
   to,
   groupTitle,
   startTimeFormatted,
+  zoomLink,
 }: {
   to: string[]
   groupTitle: string
   startTimeFormatted: string
+  zoomLink?: string | null
 }) {
   if (to.length === 0) return
 
@@ -210,6 +212,7 @@ export async function sendSessionReminderEmail({
     html: `
       <p><strong>${escHtml(groupTitle)}</strong> starts in about 24 hours.</p>
       <p><strong>When:</strong> ${escHtml(startTimeFormatted)}</p>
+      ${zoomLink ? `<p><strong>Zoom link:</strong> <a href="${escHtml(zoomLink)}">${escHtml(zoomLink)}</a></p>` : ''}
     `,
   })
 }
