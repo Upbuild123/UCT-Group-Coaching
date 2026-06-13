@@ -92,17 +92,19 @@ export async function POST(request: Request) {
         .eq('id', group.facilitator_id)
         .single()
 
-      sendSignupConfirmationEmail({
-        studentEmail: student.email,
-        studentName: student.name,
-        groupTitle: group.title,
-        startTimeFormatted: formatInTimeZone(
-          new Date(group.start_time_utc),
-          group.original_timezone,
-          'MMMM d, yyyy h:mm a zzz'
-        ),
-        facilitatorName: facilitator?.name ?? '',
-      }).catch((err: unknown) => console.error('Email failed', err))
+      if (process.env.SEND_SIGNUP_CONFIRMATION_EMAIL === 'true') {
+        sendSignupConfirmationEmail({
+          studentEmail: student.email,
+          studentName: student.name,
+          groupTitle: group.title,
+          startTimeFormatted: formatInTimeZone(
+            new Date(group.start_time_utc),
+            group.original_timezone,
+            'MMMM d, yyyy h:mm a zzz'
+          ),
+          facilitatorName: facilitator?.name ?? '',
+        }).catch((err: unknown) => console.error('Email failed', err))
+      }
     }
   }
 
