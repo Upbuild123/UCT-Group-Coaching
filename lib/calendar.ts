@@ -19,12 +19,14 @@ export async function createCalendarEvent({
   endUtc,
   facilitatorEmail,
   facilitatorName,
+  zoomLink,
 }: {
   title: string
   startUtc: Date
   endUtc: Date
   facilitatorEmail: string
   facilitatorName: string
+  zoomLink?: string | null
 }): Promise<string> {
   const calendar = getCalendarClient()
 
@@ -36,10 +38,31 @@ export async function createCalendarEvent({
       start: { dateTime: startUtc.toISOString(), timeZone: 'UTC' },
       end: { dateTime: endUtc.toISOString(), timeZone: 'UTC' },
       attendees: [{ email: facilitatorEmail, displayName: facilitatorName }],
+      ...zoomFields(zoomLink),
     },
   })
 
   return data.id!
+}
+
+function zoomFields(zoomLink: string | null | undefined) {
+  return {
+    location: zoomLink ?? '',
+    description: zoomLink ? `Join Zoom: ${zoomLink}` : '',
+  }
+}
+
+export async function updateEventZoomLink(
+  calendarEventId: string,
+  zoomLink: string | null
+): Promise<void> {
+  const calendar = getCalendarClient()
+  await calendar.events.patch({
+    calendarId: CALENDAR_ID,
+    eventId: calendarEventId,
+    sendUpdates: 'all',
+    requestBody: zoomFields(zoomLink),
+  })
 }
 
 export async function addAttendeeToEvent({

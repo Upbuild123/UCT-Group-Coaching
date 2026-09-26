@@ -1,10 +1,12 @@
 'use server'
 
+import { requireAdmin } from '@/lib/auth'
 import { adminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 export async function createStudent(formData: FormData) {
+  await requireAdmin()
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const timezone = (formData.get('timezone') as string) || 'America/New_York'
@@ -26,6 +28,7 @@ export async function createStudent(formData: FormData) {
 }
 
 export async function deleteStudent(id: string) {
+  await requireAdmin()
   await adminClient.auth.admin.deleteUser(id)
   revalidatePath('/admin/students')
 }
@@ -33,6 +36,7 @@ export async function deleteStudent(id: string) {
 export async function bulkImportStudents(
   entries: Array<{ name: string; email: string }>
 ): Promise<{ imported: number; errors: string[] }> {
+  await requireAdmin()
   const errors: string[] = []
   let imported = 0
 

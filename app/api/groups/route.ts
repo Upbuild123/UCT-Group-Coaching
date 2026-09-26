@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     try {
       const { data: facilitator } = await adminClient
         .from('users')
-        .select('name, email')
+        .select('name, email, zoom_link')
         .eq('id', slot.facilitatorId)
         .single()
 
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
         endUtc,
         facilitatorEmail: facilitator!.email,
         facilitatorName: facilitator!.name,
+        zoomLink: facilitator!.zoom_link,
       })
 
       await adminClient

@@ -1,5 +1,6 @@
 'use server'
 
+import { requireAdmin } from '@/lib/auth'
 import { adminClient } from '@/lib/supabase/admin'
 import { cancelCalendarEvent } from '@/lib/calendar'
 import { sendCancellationNotificationEmail } from '@/lib/email'
@@ -7,6 +8,7 @@ import { revalidatePath } from 'next/cache'
 import { formatInTimeZone } from 'date-fns-tz'
 
 export async function publishGroup(groupId: string) {
+  await requireAdmin()
   const { data: group } = await adminClient
     .from('group_sessions')
     .select('round_id')
@@ -20,6 +22,7 @@ export async function publishGroup(groupId: string) {
 }
 
 export async function publishAllDraftGroups(roundId: string) {
+  await requireAdmin()
   await adminClient
     .from('group_sessions')
     .update({ status: 'published' })
@@ -29,6 +32,7 @@ export async function publishAllDraftGroups(roundId: string) {
 }
 
 export async function cancelGroup(groupId: string) {
+  await requireAdmin()
   const { data: group } = await adminClient
     .from('group_sessions')
     .select('*, users!facilitator_id(name, email), signups(student_id, status, users!student_id(email))')
