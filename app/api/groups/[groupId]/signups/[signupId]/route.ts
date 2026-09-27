@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { removeAttendeeFromEvent } from '@/lib/calendar'
 
 async function recalculateStatus(groupId: string) {
@@ -76,10 +76,12 @@ export async function DELETE(
 
   // Calendar fire-and-forget
   if (group?.calendar_event_id && student?.email) {
-    removeAttendeeFromEvent({
-      calendarEventId: group.calendar_event_id,
-      email: student.email,
-    }).catch((err: unknown) => console.error('Calendar remove failed', err))
+    after(() =>
+      removeAttendeeFromEvent({
+        calendarEventId: group.calendar_event_id,
+        email: student.email,
+      }).catch((err: unknown) => console.error('Calendar remove failed', err))
+    )
   }
 
   return NextResponse.json({ ok: true })

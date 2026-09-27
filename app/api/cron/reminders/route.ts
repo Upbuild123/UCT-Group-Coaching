@@ -9,9 +9,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Runs once a day, so the window must span a full 24 hours or sessions fall between runs.
+  // 12–36h ahead means every session is reminded exactly once, the day before.
   const now = Date.now()
-  const windowStart = new Date(now + 23 * 60 * 60 * 1000).toISOString()
-  const windowEnd = new Date(now + 25 * 60 * 60 * 1000).toISOString()
+  const windowStart = new Date(now + 12 * 60 * 60 * 1000).toISOString()
+  const windowEnd = new Date(now + 36 * 60 * 60 * 1000).toISOString()
 
   const { data: groups } = await adminClient
     .from('group_sessions')

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { parseSlots, ParsedSlot } from '@/lib/parser'
+import { parseSlots, ParsedSlot, retitleForRound, creationProblem } from '@/lib/parser'
 import { formatInTimeZone } from 'date-fns-tz'
 import { fromZonedTime } from 'date-fns-tz'
 
@@ -74,7 +74,12 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
   }
 
   function updateSlot(i: number, field: keyof ConfirmSlot, value: string | number) {
-    setSlots(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: value } : s))
+    setSlots(prev => prev.map((s, idx) => {
+      if (idx !== i) return s
+      const updated = { ...s, [field]: value }
+      if (field === 'roundNumber') updated.title = retitleForRound(s.title, value as number)
+      return updated
+    }))
   }
 
   async function handleConfirm() {
@@ -88,12 +93,14 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
       timezone: slot.timezone,
       capacity: slot.capacity,
     }))
-    await fetch('/api/groups', {
+    const res = await fetch('/api/groups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slots: payload }),
     })
     setSubmitting(false)
+    const problem = await creationProblem(res)
+    if (problem) window.alert(problem)
     setText('')
     setSlots([])
     setStep('paste')

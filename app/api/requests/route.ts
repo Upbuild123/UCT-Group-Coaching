@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { createDecisionToken } from '@/lib/tokens'
 import {
   sendFullGroupRequestNotification,
@@ -100,45 +100,30 @@ export async function POST(request: Request) {
   if (!baseUrl) return NextResponse.json({ error: 'App URL not configured' }, { status: 500 })
 
   if (adminEmail) {
-    sendFullGroupRequestNotification({
-      adminEmail,
-      studentName: student.name,
-      requestedGroupTitle: group.title,
-      requestedGroupFormatted,
-      requestedRosterCount,
-      requestedCapacity: group.capacity,
-      currentGroupTitle: currentGroup?.title ?? null,
-      reason: reason ?? null,
-      adminRequestUrl: `${baseUrl}/admin/requests/${fgr.id}`,
-    }).catch((err: unknown) => console.error('Admin email failed', err))
+    after(() =>
+      sendFullGroupRequestNotification({
+        adminEmail,
+        studentName: student.name,
+        requestedGroupTitle: group.title,
+        requestedGroupFormatted,
+        requestedRosterCount,
+        requestedCapacity: group.capacity,
+        currentGroupTitle: currentGroup?.title ?? null,
+        reason: reason ?? null,
+        adminRequestUrl: `${baseUrl}/admin/requests/${fgr.id}`,
+      }).catch((err: unknown) => console.error('Admin email failed', err))
+    )
   }
 
   const approveTokenRequested = createDecisionToken(fgr.id, 'approved', requestedFacilitator.id)
   const rejectTokenRequested = createDecisionToken(fgr.id, 'rejected', requestedFacilitator.id)
 
-  sendFacilitatorRequestNotification({
-    facilitatorEmail: requestedFacilitator.email,
-    facilitatorName: requestedFacilitator.name,
-    subject: `Full group request for your session: ${group.title}`,
-    studentName: student.name,
-    requestedGroupTitle: group.title,
-    requestedGroupFormatted,
-    requestedRosterCount,
-    requestedCapacity: group.capacity,
-    currentGroupTitle: currentGroup?.title ?? null,
-    reason: reason ?? null,
-    approveUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${approveTokenRequested}`,
-    rejectUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${rejectTokenRequested}`,
-  }).catch((err: unknown) => console.error('Requested facilitator email failed', err))
-
-  if (currentFacilitator && currentFacilitator.id !== requestedFacilitator.id) {
-    const approveTokenCurrent = createDecisionToken(fgr.id, 'approved', currentFacilitator.id)
-    const rejectTokenCurrent = createDecisionToken(fgr.id, 'rejected', currentFacilitator.id)
+  after(() =>
 
     sendFacilitatorRequestNotification({
-      facilitatorEmail: currentFacilitator.email,
-      facilitatorName: currentFacilitator.name,
-      subject: `Transfer request from your session: ${student.name}`,
+      facilitatorEmail: requestedFacilitator.email,
+      facilitatorName: requestedFacilitator.name,
+      subject: `Full group request for your session: ${group.title}`,
       studentName: student.name,
       requestedGroupTitle: group.title,
       requestedGroupFormatted,
@@ -146,12 +131,37 @@ export async function POST(request: Request) {
       requestedCapacity: group.capacity,
       currentGroupTitle: currentGroup?.title ?? null,
       reason: reason ?? null,
-      approveUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${approveTokenCurrent}`,
-      rejectUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${rejectTokenCurrent}`,
-    }).catch((err: unknown) => console.error('Current facilitator email failed', err))
+      approveUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${approveTokenRequested}`,
+      rejectUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${rejectTokenRequested}`,
+    }).catch((err: unknown) => console.error('Requested facilitator email failed', err))
+
+  )
+
+  if (currentFacilitator && currentFacilitator.id !== requestedFacilitator.id) {
+    const approveTokenCurrent = createDecisionToken(fgr.id, 'approved', currentFacilitator.id)
+    const rejectTokenCurrent = createDecisionToken(fgr.id, 'rejected', currentFacilitator.id)
+
+    after(() =>
+
+      sendFacilitatorRequestNotification({
+        facilitatorEmail: currentFacilitator.email,
+        facilitatorName: currentFacilitator.name,
+        subject: `Transfer request from your session: ${student.name}`,
+        studentName: student.name,
+        requestedGroupTitle: group.title,
+        requestedGroupFormatted,
+        requestedRosterCount,
+        requestedCapacity: group.capacity,
+        currentGroupTitle: currentGroup?.title ?? null,
+        reason: reason ?? null,
+        approveUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${approveTokenCurrent}`,
+        rejectUrl: `${baseUrl}/api/requests/${fgr.id}/decide?token=${rejectTokenCurrent}`,
+      }).catch((err: unknown) => console.error('Current facilitator email failed', err))
+
+    )
   }
 
-  void (async () => {
+  after(async () => {
     const { error: auditErr } = await adminClient.from('audit_log').insert({
       actor_user_id: user.id,
       action: 'full_group_request.created',
@@ -160,7 +170,7 @@ export async function POST(request: Request) {
       metadata: { requested_group_session_id: groupSessionId },
     })
     if (auditErr) console.error('Audit log failed', auditErr)
-  })()
+  })
 
   return NextResponse.json({ requestId: fgr.id })
 }

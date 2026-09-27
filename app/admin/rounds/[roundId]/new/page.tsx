@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { parseSlots, ParsedSlot } from '@/lib/parser'
+import { parseSlots, ParsedSlot, retitleForRound, creationProblem } from '@/lib/parser'
 
 interface ConfirmSlot extends ParsedSlot {
   facilitatorId: string
@@ -43,7 +43,12 @@ export default function NewGroupsPage() {
   }
 
   function updateSlot(index: number, field: keyof ConfirmSlot, value: string | number) {
-    setSlots(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s))
+    setSlots(prev => prev.map((s, i) => {
+      if (i !== index) return s
+      const updated = { ...s, [field]: value }
+      if (field === 'roundNumber') updated.title = retitleForRound(s.title, value as number)
+      return updated
+    }))
   }
 
   async function handleConfirm() {
@@ -58,11 +63,13 @@ export default function NewGroupsPage() {
       capacity: slot.capacity,
     }))
 
-    await fetch('/api/groups', {
+    const res = await fetch('/api/groups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slots: payload }),
     })
+    const problem = await creationProblem(res)
+    if (problem) window.alert(problem)
 
     router.push(`/admin/rounds/${roundId}`)
   }

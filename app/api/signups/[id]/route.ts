@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { removeAttendeeFromEvent } from '@/lib/calendar'
 
 export async function DELETE(
@@ -20,6 +20,7 @@ export async function DELETE(
 
   if (!signup) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (signup.student_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (signup.status !== 'confirmed') return NextResponse.json({ error: 'Signup is not active' }, { status: 409 })
 
   await adminClient
     .from('signups')
@@ -50,10 +51,12 @@ export async function DELETE(
       .single()
 
     if (student) {
-      removeAttendeeFromEvent({
-        calendarEventId: group.calendar_event_id,
-        email: student.email,
-      }).catch((err: unknown) => console.error('Calendar remove failed', err))
+      after(() =>
+        removeAttendeeFromEvent({
+          calendarEventId: group.calendar_event_id,
+          email: student.email,
+        }).catch((err: unknown) => console.error('Calendar remove failed', err))
+      )
     }
   }
 

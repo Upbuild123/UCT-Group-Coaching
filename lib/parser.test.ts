@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseSlots } from './parser'
+import { parseSlots, retitleForRound } from './parser'
 
 // Mock global fetch
 const mockFetch = vi.fn()
@@ -85,5 +85,15 @@ describe('parseSlots', () => {
     mockFetch.mockResolvedValueOnce({ ok: false })
     const result = await parseSlots('some input')
     expect(result).toHaveLength(0)
+  })
+})
+
+describe('retitleForRound', () => {
+  it('updates the round number in an auto-generated title', () => {
+    expect(retitleForRound('Group Coaching Round 2 Gina', 3)).toBe('Group Coaching Round 3 Gina')
+  })
+
+  it('leaves a custom title alone', () => {
+    expect(retitleForRound('Special Session with Gina', 3)).toBe('Special Session with Gina')
   })
 })

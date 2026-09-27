@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { addAttendeeToEvent } from '@/lib/calendar'
 import { sendFullGroupApprovalEmail } from '@/lib/email'
 import { formatInTimeZone } from 'date-fns-tz'
@@ -127,24 +127,30 @@ export async function POST(
 
   // Calendar + email fire-and-forget
   if (group.calendar_event_id) {
-    addAttendeeToEvent({
-      calendarEventId: group.calendar_event_id,
-      email: student.email,
-      displayName: student.name,
-    }).catch((err: unknown) => console.error('Calendar add failed', err))
+    after(() =>
+      addAttendeeToEvent({
+        calendarEventId: group.calendar_event_id,
+        email: student.email,
+        displayName: student.name,
+      }).catch((err: unknown) => console.error('Calendar add failed', err))
+    )
   }
 
-  sendFullGroupApprovalEmail({
-    studentEmail: student.email,
-    studentName: student.name,
-    requestedGroupTitle: group.title,
-    requestedGroupFormatted: formatInTimeZone(
-      new Date(group.start_time_utc),
-      group.original_timezone,
-      'MMM d, yyyy h:mm a zzz'
-    ),
-    facilitatorName: group.users?.name ?? '',
-  }).catch((err: unknown) => console.error('Approval email failed', err))
+  after(() =>
+
+    sendFullGroupApprovalEmail({
+      studentEmail: student.email,
+      studentName: student.name,
+      requestedGroupTitle: group.title,
+      requestedGroupFormatted: formatInTimeZone(
+        new Date(group.start_time_utc),
+        group.original_timezone,
+        'MMM d, yyyy h:mm a zzz'
+      ),
+      facilitatorName: group.users?.name ?? '',
+    }).catch((err: unknown) => console.error('Approval email failed', err))
+
+  )
 
   return NextResponse.json({ ok: true })
 }

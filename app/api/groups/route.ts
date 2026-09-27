@@ -33,10 +33,14 @@ export async function POST(request: Request) {
   }
 
   const created = []
+  const problems: string[] = []
 
   for (const slot of slots) {
     const resolvedRoundId = slot.roundId ?? (slot.roundNumber ? roundMap[slot.roundNumber] : null)
-    if (!resolvedRoundId) continue
+    if (!resolvedRoundId) {
+      problems.push(`${slot.title}: round not found, not created`)
+      continue
+    }
 
     const startUtc = fromZonedTime(slot.dateTimeLocal, slot.timezone)
     const endUtc = addMinutes(startUtc, 60)
@@ -57,7 +61,10 @@ export async function POST(request: Request) {
       .select()
       .single()
 
-    if (error) continue
+    if (error) {
+      problems.push(`${slot.title}: ${error.message}`)
+      continue
+    }
 
     try {
       const { data: facilitator } = await adminClient
@@ -84,10 +91,11 @@ export async function POST(request: Request) {
       group.status = 'published'
     } catch (calError) {
       console.error('Calendar event creation failed for group', group.id, calError)
+      problems.push(`${slot.title}: calendar invite failed, saved as draft (click Publish to retry)`)
     }
 
     created.push(group)
   }
 
-  return NextResponse.json({ created })
+  return NextResponse.json({ created, problems })
 }

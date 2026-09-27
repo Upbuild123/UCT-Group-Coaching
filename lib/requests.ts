@@ -1,5 +1,6 @@
 import 'server-only'
 import { adminClient } from '@/lib/supabase/admin'
+import { after } from 'next/server'
 import { addAttendeeToEvent, removeAttendeeFromEvent } from '@/lib/calendar'
 import {
   sendFullGroupApprovalEmail,
@@ -61,11 +62,13 @@ export async function processDecision({
   const currentGroup = currentGroupRes.data
 
   if (decision === 'rejected') {
-    sendFullGroupRejectionEmail({
-      studentEmail: student.email,
-      studentName: student.name,
-      requestedGroupTitle: requestedGroup.title,
-    }).catch((err: unknown) => console.error('Rejection email failed', err))
+    after(() =>
+      sendFullGroupRejectionEmail({
+        studentEmail: student.email,
+        studentName: student.name,
+        requestedGroupTitle: requestedGroup.title,
+      }).catch((err: unknown) => console.error('Rejection email failed', err))
+    )
 
     const requestedFacilitatorOnReject = (requestedGroup as any).users
     const currentFacilitatorOnReject = currentGroup ? (currentGroup as any).users : null
@@ -75,13 +78,15 @@ export async function processDecision({
       facilitatorsOnReject.push(currentFacilitatorOnReject)
     }
     for (const f of facilitatorsOnReject) {
-      sendFacilitatorResolutionEmail({
-        facilitatorEmail: f.email,
-        facilitatorName: f.name,
-        studentName: student.name,
-        requestedGroupTitle: requestedGroup.title,
-        decision: 'rejected',
-      }).catch((err: unknown) => console.error('Facilitator rejection notification failed', err))
+      after(() =>
+        sendFacilitatorResolutionEmail({
+          facilitatorEmail: f.email,
+          facilitatorName: f.name,
+          studentName: student.name,
+          requestedGroupTitle: requestedGroup.title,
+          decision: 'rejected',
+        }).catch((err: unknown) => console.error('Facilitator rejection notification failed', err))
+      )
     }
 
     await adminClient.from('audit_log').insert({
@@ -125,17 +130,21 @@ export async function processDecision({
     }
 
     if (currentGroup.calendar_event_id) {
-      removeAttendeeFromEvent({ calendarEventId: currentGroup.calendar_event_id, email: student.email })
-        .catch((err: unknown) => console.error('Remove from old calendar failed', err))
+      after(() =>
+        removeAttendeeFromEvent({ calendarEventId: currentGroup.calendar_event_id, email: student.email })
+          .catch((err: unknown) => console.error('Remove from old calendar failed', err))
+      )
     }
   }
 
   if (requestedGroup.calendar_event_id) {
-    addAttendeeToEvent({
-      calendarEventId: requestedGroup.calendar_event_id,
-      email: student.email,
-      displayName: student.name,
-    }).catch((err: unknown) => console.error('Add to new calendar failed', err))
+    after(() =>
+      addAttendeeToEvent({
+        calendarEventId: requestedGroup.calendar_event_id,
+        email: student.email,
+        displayName: student.name,
+      }).catch((err: unknown) => console.error('Add to new calendar failed', err))
+    )
   }
 
   const requestedFormatted = formatInTimeZone(
@@ -145,13 +154,15 @@ export async function processDecision({
   )
 
   const requestedFacilitator = (requestedGroup as any).users
-  sendFullGroupApprovalEmail({
-    studentEmail: student.email,
-    studentName: student.name,
-    requestedGroupTitle: requestedGroup.title,
-    requestedGroupFormatted: requestedFormatted,
-    facilitatorName: requestedFacilitator?.name ?? '',
-  }).catch((err: unknown) => console.error('Approval email failed', err))
+  after(() =>
+    sendFullGroupApprovalEmail({
+      studentEmail: student.email,
+      studentName: student.name,
+      requestedGroupTitle: requestedGroup.title,
+      requestedGroupFormatted: requestedFormatted,
+      facilitatorName: requestedFacilitator?.name ?? '',
+    }).catch((err: unknown) => console.error('Approval email failed', err))
+  )
 
   const facilitatorsToNotify: Array<{ id: string; name: string; email: string }> = []
   if (requestedFacilitator) facilitatorsToNotify.push(requestedFacilitator)
@@ -161,13 +172,15 @@ export async function processDecision({
   }
 
   for (const f of facilitatorsToNotify) {
-    sendFacilitatorResolutionEmail({
-      facilitatorEmail: f.email,
-      facilitatorName: f.name,
-      studentName: student.name,
-      requestedGroupTitle: requestedGroup.title,
-      decision: 'approved',
-    }).catch((err: unknown) => console.error('Facilitator resolution email failed', err))
+    after(() =>
+      sendFacilitatorResolutionEmail({
+        facilitatorEmail: f.email,
+        facilitatorName: f.name,
+        studentName: student.name,
+        requestedGroupTitle: requestedGroup.title,
+        decision: 'approved',
+      }).catch((err: unknown) => console.error('Facilitator resolution email failed', err))
+    )
   }
 
   await adminClient.from('audit_log').insert({

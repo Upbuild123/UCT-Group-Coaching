@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { addAttendeeToEvent } from '@/lib/calendar'
 import { sendSignupConfirmationEmail } from '@/lib/email'
 import { formatInTimeZone } from 'date-fns-tz'
@@ -20,6 +20,9 @@ export async function POST(request: Request) {
 
   if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 })
   if (group.status !== 'published') return NextResponse.json({ error: 'Group is not available' }, { status: 400 })
+  if (new Date(group.start_time_utc) <= new Date()) {
+    return NextResponse.json({ error: 'This session has already started' }, { status: 400 })
+  }
 
   const round = group.rounds
   if (round.signup_status === 'closed') {
@@ -80,11 +83,13 @@ export async function POST(request: Request) {
       .single()
 
     if (student) {
-      addAttendeeToEvent({
-        calendarEventId: group.calendar_event_id,
-        email: student.email,
-        displayName: student.name,
-      }).catch((err: unknown) => console.error('Calendar add failed', err))
+      after(() =>
+        addAttendeeToEvent({
+          calendarEventId: group.calendar_event_id,
+          email: student.email,
+          displayName: student.name,
+        }).catch((err: unknown) => console.error('Calendar add failed', err))
+      )
 
       const { data: facilitator } = await adminClient
         .from('users')
@@ -93,17 +98,19 @@ export async function POST(request: Request) {
         .single()
 
       if (process.env.SEND_SIGNUP_CONFIRMATION_EMAIL === 'true') {
-        sendSignupConfirmationEmail({
-          studentEmail: student.email,
-          studentName: student.name,
-          groupTitle: group.title,
-          startTimeFormatted: formatInTimeZone(
-            new Date(group.start_time_utc),
-            group.original_timezone,
-            'MMMM d, yyyy h:mm a zzz'
-          ),
-          facilitatorName: facilitator?.name ?? '',
-        }).catch((err: unknown) => console.error('Email failed', err))
+        after(() =>
+          sendSignupConfirmationEmail({
+            studentEmail: student.email,
+            studentName: student.name,
+            groupTitle: group.title,
+            startTimeFormatted: formatInTimeZone(
+              new Date(group.start_time_utc),
+              group.original_timezone,
+              'MMMM d, yyyy h:mm a zzz'
+            ),
+            facilitatorName: facilitator?.name ?? '',
+          }).catch((err: unknown) => console.error('Email failed', err))
+        )
       }
     }
   }
