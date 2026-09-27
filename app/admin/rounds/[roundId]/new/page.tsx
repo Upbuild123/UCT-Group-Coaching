@@ -49,7 +49,7 @@ export default function NewGroupsPage() {
   async function handleConfirm() {
     setSubmitting(true)
     const payload = slots.map(slot => ({
-      roundId,
+      roundNumber: slot.roundNumber,
       facilitatorId: slot.facilitatorId,
       title: slot.title,
       notes: slot.notes,
