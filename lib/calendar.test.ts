@@ -4,14 +4,15 @@ vi.mock('server-only', () => ({}))
 
 const get = vi.fn()
 const patch = vi.fn()
+const insert = vi.fn()
 vi.mock('googleapis', () => ({
   google: {
     auth: { JWT: vi.fn() },
-    calendar: () => ({ events: { get, patch } }),
+    calendar: () => ({ events: { get, patch, insert } }),
   },
 }))
 
-import { addAttendeeToEvent, removeAttendeeFromEvent } from './calendar'
+import { addAttendeeToEvent, removeAttendeeFromEvent, createCalendarEvent } from './calendar'
 
 const existing = [{ email: 'facilitator@upbuild.com' }]
 
@@ -30,6 +31,7 @@ describe('addAttendeeToEvent', () => {
     expect(patch).toHaveBeenCalledTimes(1)
     const [params, options] = patch.mock.calls[0]
     expect(params.requestBody.attendees).toEqual([...existing, { email: 'a@x.com', displayName: 'A' }])
+    expect(params.requestBody.guestsCanSeeOtherGuests).toBe(false)
     expect(options.headers['If-Match']).toBe('"v1"')
   })
 
@@ -70,5 +72,21 @@ describe('removeAttendeeFromEvent', () => {
     patch.mockResolvedValue({})
     await removeAttendeeFromEvent({ calendarEventId: 'e1', email: 'a@x.com' })
     expect(patch.mock.calls[0][0].requestBody.attendees).toEqual(existing)
+  })
+})
+
+describe('createCalendarEvent', () => {
+  it('invites the facilitator with the guest list hidden', async () => {
+    insert.mockResolvedValue({ data: { id: 'e1' } })
+    await createCalendarEvent({
+      title: 'Group Coaching Round 1 Gina',
+      startUtc: new Date('2026-11-25T00:00:00Z'),
+      endUtc: new Date('2026-11-25T01:00:00Z'),
+      facilitatorEmail: 'gina@upbuild.com',
+      facilitatorName: 'Gina',
+    })
+    const body = insert.mock.calls[0][0].requestBody
+    expect(body.attendees).toEqual([{ email: 'gina@upbuild.com', displayName: 'Gina' }])
+    expect(body.guestsCanSeeOtherGuests).toBe(false)
   })
 })

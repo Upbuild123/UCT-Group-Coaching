@@ -4,6 +4,7 @@ import { NextResponse, after } from 'next/server'
 import { addAttendeeToEvent } from '@/lib/calendar'
 import { sendSignupConfirmationEmail } from '@/lib/email'
 import { formatInTimeZone } from 'date-fns-tz'
+import { MAX_SIGNUPS_PER_ROUND } from '@/lib/types'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -42,6 +43,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You already have a signup in this round' }, { status: 400 })
   }
 
+  const { count: roundSignups } = await adminClient
+    .from('signups')
+    .select('id', { count: 'exact', head: true })
+    .eq('student_id', user.id)
+    .eq('round_id', group.round_id)
+    .eq('status', 'confirmed')
+
+  if ((roundSignups ?? 0) >= MAX_SIGNUPS_PER_ROUND) {
+    return NextResponse.json({ error: `You can register for at most ${MAX_SIGNUPS_PER_ROUND} sessions per round` }, { status: 400 })
+  }
+
   const confirmedCount = (group.signups ?? []).filter((s: any) => s.status === 'confirmed').length
   if (confirmedCount >= group.capacity) {
     await adminClient.from('group_sessions').update({ status: 'full' }).eq('id', groupSessionId)
@@ -64,6 +76,9 @@ export async function POST(request: Request) {
   if (signupError) {
     // The database enforces capacity and one primary signup per round, so a simultaneous
     // signup that passed the checks above can still be refused here
+    if (signupError.message.includes('Round signup limit')) {
+      return NextResponse.json({ error: `You can register for at most ${MAX_SIGNUPS_PER_ROUND} sessions per round` }, { status: 400 })
+    }
     if (signupError.message.includes('Group is full')) {
       await adminClient.from('group_sessions').update({ status: 'full' }).eq('id', groupSessionId).eq('status', 'published')
       return NextResponse.json({ error: 'Group is full' }, { status: 400 })

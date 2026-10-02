@@ -38,6 +38,9 @@ export async function createCalendarEvent({
       start: { dateTime: startUtc.toISOString(), timeZone: 'UTC' },
       end: { dateTime: endUtc.toISOString(), timeZone: 'UTC' },
       attendees: [{ email: facilitatorEmail, displayName: facilitatorName }],
+      // Students are added to this invite as they register; hide the guest list so each one
+      // sees only themselves, not the facilitator or the other students
+      guestsCanSeeOtherGuests: false,
       ...zoomFields(zoomLink),
     },
   })
@@ -89,7 +92,8 @@ async function updateAttendees(
           calendarId: CALENDAR_ID,
           eventId: calendarEventId,
           sendUpdates: 'all',
-          requestBody: { attendees },
+          // Also hides the guest list on invites created before it was hidden by default
+          requestBody: { attendees, guestsCanSeeOtherGuests: false },
         },
         { headers: { 'If-Match': event.etag! } }
       )

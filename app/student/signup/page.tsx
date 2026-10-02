@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TIMEZONES, formatSessionTime } from '@/lib/timezones'
+import { MAX_SIGNUPS_PER_ROUND } from '@/lib/types'
 
 interface Group {
   id: string
@@ -148,7 +149,9 @@ export default function SignupPage() {
   if (loading) return <div className="text-center py-12 text-slate-400">Loading...</div>
 
   const round = rounds[activeRound]
-  const hasSlotInRound = !!round?.groups.some(g => g.my_signup_id)
+  const mySlotsInRound = round?.groups.filter(g => g.my_signup_id).length ?? 0
+  const hasSlotInRound = mySlotsInRound > 0
+  const atRoundLimit = mySlotsInRound >= MAX_SIGNUPS_PER_ROUND
   const extraOpen = round?.signup_status === 'extra_signups_open'
   const modalGroup = modalGroupId ? round?.groups.find(g => g.id === modalGroupId) ?? null : null
 
@@ -185,9 +188,9 @@ export default function SignupPage() {
               {actionError}
             </div>
           )}
-          {extraOpen && hasSlotInRound && (
+          {extraOpen && hasSlotInRound && !atRoundLimit && (
             <div className="bg-brand-50 ring-1 ring-brand-200 rounded-lg p-3 mb-4 text-sm text-brand-700">
-              Extra sessions are open: you can register for more than one session in {round.title}.
+              Extra sessions are open: you can register for up to {MAX_SIGNUPS_PER_ROUND} sessions in {round.title}.
             </div>
           )}
           {round.signup_status === 'closed' && (
@@ -238,6 +241,8 @@ export default function SignupPage() {
                       )
                     ) : round.signup_status === 'closed' ? (
                       <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">Closed</button>
+                    ) : atRoundLimit ? (
+                      <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">{MAX_SIGNUPS_PER_ROUND}-session limit reached</button>
                     ) : hasSlotInRound && !extraOpen ? (
                       <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">Registered for this round</button>
                     ) : (

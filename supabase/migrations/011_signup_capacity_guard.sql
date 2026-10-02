@@ -1,7 +1,7 @@
 -- Enforce group capacity in the database so simultaneous signups can't overbook a group.
 -- Locking the group row serialises concurrent inserts for the same group; each waits for the
 -- previous one to commit, then counts again. Admin overrides (manual adds, approved full-group
--- requests) are allowed to exceed capacity on purpose.
+-- requests) are allowed to exceed capacity and the per-round limit on purpose.
 create or replace function public.enforce_group_capacity()
 returns trigger
 language plpgsql
@@ -26,6 +26,20 @@ begin
 
   if confirmed_count >= group_capacity then
     raise exception 'Group is full' using errcode = 'P0001';
+  end if;
+
+  -- A student may hold at most 2 sessions per round (MAX_SIGNUPS_PER_ROUND in lib/types.ts).
+  -- Lock the student's row so two signups for different groups can't both slip under the cap.
+  perform 1 from public.users where id = new.student_id for update;
+
+  select count(*) into confirmed_count
+  from public.signups
+  where student_id = new.student_id
+    and round_id = new.round_id
+    and status = 'confirmed';
+
+  if confirmed_count >= 2 then
+    raise exception 'Round signup limit reached' using errcode = 'P0001';
   end if;
 
   return new;

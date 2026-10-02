@@ -6,6 +6,10 @@ export type SignupType = 'primary' | 'additional' | 'admin_override'
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'canceled'
 export type FacilitatorDecision = 'approved' | 'rejected' | null
 
+// Students can hold at most this many sessions in one round, even with extra signups open
+// (also enforced by the signups trigger in supabase/migrations/011_signup_capacity_guard.sql)
+export const MAX_SIGNUPS_PER_ROUND = 2
+
 export interface User {
   id: string
   name: string
