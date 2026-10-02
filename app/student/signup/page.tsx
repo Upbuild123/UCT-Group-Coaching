@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatInTimeZone } from 'date-fns-tz'
-import { TIMEZONES } from '@/lib/timezones'
+import { TIMEZONES, formatSessionTime } from '@/lib/timezones'
 
 interface Group {
   id: string
@@ -37,6 +36,7 @@ export default function SignupPage() {
   const [modalReason, setModalReason] = useState('')
   const [requestLoading, setRequestLoading] = useState(false)
   const [requestError, setRequestError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => { loadData() }, [])
 
@@ -44,6 +44,7 @@ export default function SignupPage() {
     setModalGroupId(null)
     setModalReason('')
     setRequestError(null)
+    setActionError(null)
   }, [activeRound])
 
   async function handleTimezoneChange(tz: string) {
@@ -99,18 +100,28 @@ export default function SignupPage() {
 
   async function handleSignup(groupId: string) {
     setActionLoading(groupId)
-    await fetch('/api/signups', {
+    setActionError(null)
+    const res = await fetch('/api/signups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ groupSessionId: groupId }),
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setActionError(data.error ?? 'Something went wrong. Please try again.')
+    }
     await loadData()
     setActionLoading(null)
   }
 
   async function handleCancel(signupId: string) {
     setActionLoading(signupId)
-    await fetch(`/api/signups/${signupId}`, { method: 'DELETE' })
+    setActionError(null)
+    const res = await fetch(`/api/signups/${signupId}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setActionError(data.error ?? 'Something went wrong. Please try again.')
+    }
     await loadData()
     setActionLoading(null)
   }
@@ -137,6 +148,8 @@ export default function SignupPage() {
   if (loading) return <div className="text-center py-12 text-slate-400">Loading...</div>
 
   const round = rounds[activeRound]
+  const hasSlotInRound = !!round?.groups.some(g => g.my_signup_id)
+  const extraOpen = round?.signup_status === 'extra_signups_open'
   const modalGroup = modalGroupId ? round?.groups.find(g => g.id === modalGroupId) ?? null : null
 
   return (
@@ -167,6 +180,16 @@ export default function SignupPage() {
 
       {round && (
         <div>
+          {actionError && (
+            <div className="bg-rose-50 ring-1 ring-rose-200 rounded-lg p-3 mb-4 text-sm text-rose-700">
+              {actionError}
+            </div>
+          )}
+          {extraOpen && hasSlotInRound && (
+            <div className="bg-brand-50 ring-1 ring-brand-200 rounded-lg p-3 mb-4 text-sm text-brand-700">
+              Extra sessions are open: you can register for more than one session in {round.title}.
+            </div>
+          )}
           {round.signup_status === 'closed' && (
             <div className="bg-amber-50 ring-1 ring-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-700">
               Signup is currently closed for {round.title}.
@@ -181,14 +204,9 @@ export default function SignupPage() {
                 <div key={group.id} className="card flex flex-col">
                   <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">Facilitator</p>
                   <h3 className="font-semibold text-slate-900 mb-2">{group.facilitator_name}</h3>
-                  <p className="text-sm text-slate-600 mb-1">
-                    {formatInTimeZone(new Date(group.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
+                  <p className="text-sm text-slate-600 mb-2">
+                    {formatSessionTime(group.start_time_utc, myTimezone)}
                   </p>
-                  {myTimezone !== group.original_timezone && (
-                    <p className="text-xs text-slate-400 mb-2">
-                      {formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, h:mm a zzz')}
-                    </p>
-                  )}
                   {isFull && (
                     <span className="badge-gray w-fit mb-3">Full</span>
                   )}
@@ -220,6 +238,8 @@ export default function SignupPage() {
                       )
                     ) : round.signup_status === 'closed' ? (
                       <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">Closed</button>
+                    ) : hasSlotInRound && !extraOpen ? (
+                      <button disabled className="btn-secondary text-xs px-3 py-1.5 cursor-not-allowed">Registered for this round</button>
                     ) : (
                       <button onClick={() => handleSignup(group.id)}
                         disabled={actionLoading === group.id}
@@ -244,7 +264,7 @@ export default function SignupPage() {
             <h2 className="font-semibold text-lg mb-1 text-slate-900">Request to join full group</h2>
             <p className="text-sm text-slate-600 mb-4">
               {modalGroup.facilitator_name} —{' '}
-              {formatInTimeZone(new Date(modalGroup.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
+              {formatSessionTime(modalGroup.start_time_utc, myTimezone)}
             </p>
             <label className="block text-sm text-slate-600 mb-1">Reason (optional)</label>
             <textarea

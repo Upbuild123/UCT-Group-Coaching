@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatInTimeZone } from 'date-fns-tz'
-import { TIMEZONES } from '@/lib/timezones'
+import { TIMEZONES, formatSessionTime } from '@/lib/timezones'
 
 interface SessionItem {
   id: string
@@ -94,13 +93,8 @@ export default function MySessionsPage() {
                   <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">Facilitator</p>
                   <h3 className="font-semibold text-slate-900 mb-1">{session.facilitator_name}</h3>
                   <p className="text-sm text-slate-600 mt-1">
-                    {formatInTimeZone(new Date(session.start_time_utc), myTimezone, 'MMM d, yyyy h:mm a zzz')}
+                    {formatSessionTime(session.start_time_utc, myTimezone)}
                   </p>
-                  {myTimezone !== session.original_timezone && (
-                    <p className="text-xs text-slate-400">
-                      {formatInTimeZone(new Date(session.start_time_utc), session.original_timezone, 'MMM d, h:mm a zzz')}
-                    </p>
-                  )}
                 </div>
                 {session.status === 'canceled' && (
                   <span className="badge-red">canceled</span>
