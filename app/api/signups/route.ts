@@ -61,7 +61,18 @@ export async function POST(request: Request) {
     .select()
     .single()
 
-  if (signupError) return NextResponse.json({ error: signupError.message }, { status: 500 })
+  if (signupError) {
+    // The database enforces capacity and one primary signup per round, so a simultaneous
+    // signup that passed the checks above can still be refused here
+    if (signupError.message.includes('Group is full')) {
+      await adminClient.from('group_sessions').update({ status: 'full' }).eq('id', groupSessionId).eq('status', 'published')
+      return NextResponse.json({ error: 'Group is full' }, { status: 400 })
+    }
+    if (signupError.code === '23505') {
+      return NextResponse.json({ error: 'You already have a signup in this round' }, { status: 400 })
+    }
+    return NextResponse.json({ error: signupError.message }, { status: 500 })
+  }
 
   if (confirmedCount + 1 >= group.capacity) {
     await adminClient.from('group_sessions').update({ status: 'full' }).eq('id', groupSessionId)

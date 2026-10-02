@@ -1,5 +1,5 @@
 import 'server-only'
-import { google } from 'googleapis'
+import { google, calendar_v3 } from 'googleapis'
 
 function getCalendarClient() {
   const jwt = new google.auth.JWT({
@@ -65,6 +65,44 @@ export async function updateEventZoomLink(
   })
 }
 
+// Attendee lists are read, changed, and written back, so two changes to the same event at once
+// could overwrite each other. The write is conditional on the event's etag; on a conflict (412)
+// we re-read and try again.
+async function updateAttendees(
+  calendarEventId: string,
+  change: (attendees: calendar_v3.Schema$EventAttendee[]) => calendar_v3.Schema$EventAttendee[] | null
+): Promise<void> {
+  const calendar = getCalendarClient()
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data: event } = await calendar.events.get({
+      calendarId: CALENDAR_ID,
+      eventId: calendarEventId,
+    })
+
+    const attendees = change(event.attendees ?? [])
+    if (!attendees) return
+
+    try {
+      await calendar.events.patch(
+        {
+          calendarId: CALENDAR_ID,
+          eventId: calendarEventId,
+          sendUpdates: 'all',
+          requestBody: { attendees },
+        },
+        { headers: { 'If-Match': event.etag! } }
+      )
+      return
+    } catch (err) {
+      const status = (err as { code?: number; status?: number }).code ?? (err as { status?: number }).status
+      if (status !== 412) throw err
+    }
+  }
+
+  throw new Error(`Calendar event ${calendarEventId}: attendee update kept conflicting, gave up`)
+}
+
 export async function addAttendeeToEvent({
   calendarEventId,
   email,
@@ -74,24 +112,9 @@ export async function addAttendeeToEvent({
   email: string
   displayName: string
 }): Promise<void> {
-  const calendar = getCalendarClient()
-
-  const { data: event } = await calendar.events.get({
-    calendarId: CALENDAR_ID,
-    eventId: calendarEventId,
-  })
-
-  const attendees = event.attendees ?? []
-  if (attendees.some(a => a.email === email)) return
-
-  attendees.push({ email, displayName })
-
-  await calendar.events.patch({
-    calendarId: CALENDAR_ID,
-    eventId: calendarEventId,
-    sendUpdates: 'all',
-    requestBody: { attendees },
-  })
+  await updateAttendees(calendarEventId, attendees =>
+    attendees.some(a => a.email === email) ? null : [...attendees, { email, displayName }]
+  )
 }
 
 export async function removeAttendeeFromEvent({
@@ -101,21 +124,9 @@ export async function removeAttendeeFromEvent({
   calendarEventId: string
   email: string
 }): Promise<void> {
-  const calendar = getCalendarClient()
-
-  const { data: event } = await calendar.events.get({
-    calendarId: CALENDAR_ID,
-    eventId: calendarEventId,
-  })
-
-  const attendees = (event.attendees ?? []).filter(a => a.email !== email)
-
-  await calendar.events.patch({
-    calendarId: CALENDAR_ID,
-    eventId: calendarEventId,
-    sendUpdates: 'all',
-    requestBody: { attendees },
-  })
+  await updateAttendees(calendarEventId, attendees =>
+    attendees.some(a => a.email === email) ? attendees.filter(a => a.email !== email) : null
+  )
 }
 
 export async function cancelCalendarEvent(calendarEventId: string): Promise<void> {
