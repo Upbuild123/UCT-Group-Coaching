@@ -7,6 +7,7 @@ export const TIMEZONES = [
   { label: 'Pacific (PT)', value: 'America/Los_Angeles' },
   { label: 'London (GMT/BST)', value: 'Europe/London' },
   { label: 'Paris / Berlin (CET)', value: 'Europe/Paris' },
+  { label: 'Kenya / East Africa (EAT)', value: 'Africa/Nairobi' },
   { label: 'India (IST)', value: 'Asia/Kolkata' },
   { label: 'Japan (JST)', value: 'Asia/Tokyo' },
   { label: 'Hong Kong (HKT)', value: 'Asia/Hong_Kong' },

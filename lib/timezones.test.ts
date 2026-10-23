@@ -8,6 +8,7 @@ describe('formatSessionTime', () => {
   it('shows the time in the chosen zone with the dropdown label', () => {
     expect(formatSessionTime(start, 'Asia/Tokyo')).toBe('Wed, Nov 25, 2026 · 9:00 AM Japan (JST)')
     expect(formatSessionTime(start, 'America/New_York')).toBe('Tue, Nov 24, 2026 · 7:00 PM Eastern (ET)')
+    expect(formatSessionTime(start, 'Africa/Nairobi')).toBe('Wed, Nov 25, 2026 · 3:00 AM Kenya / East Africa (EAT)')
   })
 
   it('falls back to the zone abbreviation for a zone not in the list', () => {
