@@ -31,14 +31,25 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
     return facilitators.find(f => f.name.toLowerCase().startsWith(lower))?.id ?? ''
   }
 
+  // null when the reader failed; the error has already been shown
+  async function readSlots(input: string): Promise<ParsedSlot[] | null> {
+    try {
+      return await parseSlots(input)
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      return null
+    }
+  }
+
   async function handleParse(inputText = text) {
     const combined = adjustment.trim()
       ? `${inputText}\n\n${adjustment}`
       : inputText
     setParsing(true)
     setParseError('')
-    const parsed = await parseSlots(combined)
+    const parsed = await readSlots(combined)
     setParsing(false)
+    if (!parsed) return
     if (parsed.length === 0) {
       setParseError('No slots found. Check your format and try again.')
       return
@@ -58,8 +69,9 @@ export default function GroupParser({ facilitators }: { facilitators: Facilitato
     const combined = `${text}\n\n${adjustment}`
     setParsing(true)
     setParseError('')
-    const parsed = await parseSlots(combined)
+    const parsed = await readSlots(combined)
     setParsing(false)
+    if (!parsed) return
     if (parsed.length === 0) {
       setParseError('Adjustment returned no slots.')
       return

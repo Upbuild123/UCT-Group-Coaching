@@ -75,16 +75,19 @@ describe('parseSlots', () => {
     expect(result[1].facilitatorName).toBe('Rasanath')
   })
 
-  it('returns empty array when fetch fails', async () => {
+  it('throws a readable error when fetch fails', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
-    const result = await parseSlots('some input')
-    expect(result).toHaveLength(0)
+    await expect(parseSlots('some input')).rejects.toThrow('Could not reach the server')
   })
 
-  it('returns empty array when response is not ok', async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false })
-    const result = await parseSlots('some input')
-    expect(result).toHaveLength(0)
+  it('throws a readable error when the reader fails', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+    await expect(parseSlots('some input')).rejects.toThrow("The text reader isn't working right now (error 500)")
+  })
+
+  it('asks the admin to sign in again when their session has expired', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 })
+    await expect(parseSlots('some input')).rejects.toThrow('sign in again')
   })
 })
 

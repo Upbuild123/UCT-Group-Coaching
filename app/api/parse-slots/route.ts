@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import type { ParsedSlot } from '@/lib/parser'
 
@@ -62,6 +63,13 @@ function isValidSlot(s: unknown): s is ParsedSlot {
 }
 
 export async function POST(request: Request) {
+  // Admin only: this spends OpenAI credit on every call
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
   let input: string
   try {
     const body = await request.json() as { input?: string }

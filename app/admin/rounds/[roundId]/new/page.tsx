@@ -20,9 +20,25 @@ export default function NewGroupsPage() {
   const [facilitators, setFacilitators] = useState<Array<{ id: string; name: string }>>([])
   const [step, setStep] = useState<'paste' | 'confirm'>('paste')
   const [submitting, setSubmitting] = useState(false)
+  const [parsing, setParsing] = useState(false)
+  const [parseError, setParseError] = useState('')
 
   async function handleParse() {
-    const parsed = await parseSlots(text)
+    setParsing(true)
+    setParseError('')
+    let parsed: ParsedSlot[]
+    try {
+      parsed = await parseSlots(text)
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setParsing(false)
+      return
+    }
+    setParsing(false)
+    if (parsed.length === 0) {
+      setParseError('No groups found. Check your format and try again.')
+      return
+    }
     const res = await fetch('/api/users?role=facilitator')
     const { users } = await res.json()
     setFacilitators(users)
@@ -87,12 +103,13 @@ export default function NewGroupsPage() {
             placeholder={`Gina:\nRound 1: March 5, 2026, 12:00 PM ET, capacity 5`}
             className="input font-mono"
           />
+          {parseError && <p className="text-rose-600 text-sm mt-3">{parseError}</p>}
           <button
             onClick={handleParse}
-            disabled={!text.trim()}
+            disabled={!text.trim() || parsing}
             className="btn-primary mt-3"
           >
-            Parse
+            {parsing ? 'Reading...' : 'Parse'}
           </button>
         </div>
       </div>

@@ -6,27 +6,30 @@ export interface ParsedSlot {
   capacity: number
 }
 
+// Throws when the reader itself fails, so the admin isn't told their text had no sessions in it
 export async function parseSlots(input: string): Promise<ParsedSlot[]> {
   if (!input.trim()) return []
 
+  let res: Response
   try {
-    const res = await fetch('/api/parse-slots', {
+    res = await fetch('/api/parse-slots', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ input }),
     })
-
-    if (!res.ok) {
-      console.error('parseSlots: non-ok response', res.status)
-      return []
-    }
-
-    const { slots } = await res.json()
-    return slots as ParsedSlot[]
-  } catch (err) {
-    console.error('parseSlots: request failed', err)
-    return []
+  } catch {
+    throw new Error('Could not reach the server. Check your connection and try again.')
   }
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error('Your admin session has expired. Please sign in again.')
+  }
+  if (!res.ok) {
+    throw new Error(`The text reader isn't working right now (error ${res.status}). Check the System check page.`)
+  }
+
+  const { slots } = await res.json()
+  return slots as ParsedSlot[]
 }
 
 // Keep an auto-generated "Group Coaching Round N ..." title in step with the chosen round
