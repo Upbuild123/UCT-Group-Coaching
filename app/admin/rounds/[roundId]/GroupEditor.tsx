@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatInTimeZone } from 'date-fns-tz'
+import { TIMEZONES } from '@/lib/timezones'
 
 interface Student {
   id: string
@@ -16,6 +18,8 @@ interface Signup {
 interface Group {
   id: string
   capacity: number
+  start_time_utc: string
+  original_timezone: string
 }
 
 export default function GroupEditor({ group, allStudents }: {
@@ -29,6 +33,11 @@ export default function GroupEditor({ group, allStudents }: {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [capacityLoading, setCapacityLoading] = useState(false)
+  const [dateTimeLocal, setDateTimeLocal] = useState(
+    formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, "yyyy-MM-dd'T'HH:mm")
+  )
+  const [timezone, setTimezone] = useState(group.original_timezone)
+  const [scheduleLoading, setScheduleLoading] = useState(false)
 
   useEffect(() => {
     fetchSignups()
@@ -55,6 +64,25 @@ export default function GroupEditor({ group, allStudents }: {
     const data = await res.json()
     if (!res.ok) setError(data.error ?? 'Failed to update capacity')
     setCapacityLoading(false)
+  }
+
+  async function saveSchedule() {
+    const people = signups.length === 1 ? '1 student' : `${signups.length} students`
+    if (!window.confirm(`Move this session to the new time? The updated calendar invite will be emailed to the facilitator and ${people}.`)) return
+    setScheduleLoading(true)
+    setError(null)
+    const res = await fetch(`/api/groups/${group.id}/schedule`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dateTimeLocal, timezone }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setScheduleLoading(false)
+    if (!res.ok) {
+      setError(data.error ?? 'Failed to change the time')
+      return
+    }
+    window.location.reload()
   }
 
   async function addStudent() {
@@ -99,6 +127,31 @@ export default function GroupEditor({ group, allStudents }: {
   return (
     <div className="border-t border-slate-100 bg-slate-50 px-4 py-4 space-y-6">
       {error && <p className="text-sm text-rose-600">{error}</p>}
+
+      {/* Date & time */}
+      <div>
+        <h4 className="text-sm font-medium text-slate-700 mb-2">Date &amp; time</h4>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            type="datetime-local"
+            value={dateTimeLocal}
+            onChange={e => setDateTimeLocal(e.target.value)}
+            className="input w-auto"
+          />
+          <select value={timezone} onChange={e => setTimezone(e.target.value)} className="input w-auto">
+            {!TIMEZONES.some(t => t.value === timezone) && <option value={timezone}>{timezone}</option>}
+            {TIMEZONES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+          <button
+            onClick={saveSchedule}
+            disabled={scheduleLoading || !dateTimeLocal}
+            className="btn-primary text-sm px-3 py-1.5"
+          >
+            {scheduleLoading ? 'Saving...' : 'Change time'}
+          </button>
+        </div>
+        <p className="text-xs text-slate-500 mt-1">Moves the existing invite; everyone on it gets the updated time by email.</p>
+      </div>
 
       {/* Capacity */}
       <div>

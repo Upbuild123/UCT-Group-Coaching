@@ -55,17 +55,43 @@ function zoomFields(zoomLink: string | null | undefined) {
   }
 }
 
+// notify: false updates every guest's calendar copy without sending an "Updated invitation" email
 export async function updateEventZoomLink(
   calendarEventId: string,
-  zoomLink: string | null
+  zoomLink: string | null,
+  { notify = true }: { notify?: boolean } = {}
+): Promise<void> {
+  const calendar = getCalendarClient()
+  await calendar.events.patch({
+    calendarId: CALENDAR_ID,
+    eventId: calendarEventId,
+    sendUpdates: notify ? 'all' : 'none',
+    requestBody: zoomFields(zoomLink),
+  })
+}
+
+// Moves the invite to a new time; every guest gets an "Updated invitation" and the old time disappears
+export async function rescheduleCalendarEvent(
+  calendarEventId: string,
+  startUtc: Date,
+  endUtc: Date
 ): Promise<void> {
   const calendar = getCalendarClient()
   await calendar.events.patch({
     calendarId: CALENDAR_ID,
     eventId: calendarEventId,
     sendUpdates: 'all',
-    requestBody: zoomFields(zoomLink),
+    requestBody: {
+      start: { dateTime: startUtc.toISOString(), timeZone: 'UTC' },
+      end: { dateTime: endUtc.toISOString(), timeZone: 'UTC' },
+    },
   })
+}
+
+export async function getEventLocation(calendarEventId: string): Promise<string | null> {
+  const calendar = getCalendarClient()
+  const { data } = await calendar.events.get({ calendarId: CALENDAR_ID, eventId: calendarEventId })
+  return data.location ?? null
 }
 
 // Attendee lists are read, changed, and written back, so two changes to the same event at once

@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/auth'
 import { runSystemChecks } from '@/lib/system-check'
+import { addMissingZoomLinks } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,12 @@ export default async function SystemCheckPage() {
               <p className="font-semibold text-slate-900">{r.name}</p>
               <p className="text-xs text-slate-500 mb-1">{r.usedFor}</p>
               <p className={`text-sm break-words ${r.ok ? 'text-slate-600' : 'text-rose-700'}`}>{r.detail}</p>
+              {r.name === 'Zoom links on invites' && !r.ok && r.detail.startsWith('Missing') && (
+                <form action={addMissingZoomLinks} className="mt-3">
+                  <button type="submit" className="btn-primary text-xs px-3 py-1.5">Add Zoom links to invites</button>
+                  <p className="text-xs text-slate-500 mt-1">Updates the invites quietly; no emails are sent.</p>
+                </form>
+              )}
             </div>
           </div>
         ))}

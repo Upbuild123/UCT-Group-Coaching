@@ -12,7 +12,7 @@ vi.mock('googleapis', () => ({
   },
 }))
 
-import { addAttendeeToEvent, removeAttendeeFromEvent, createCalendarEvent } from './calendar'
+import { addAttendeeToEvent, removeAttendeeFromEvent, createCalendarEvent, rescheduleCalendarEvent, updateEventZoomLink } from './calendar'
 
 const existing = [{ email: 'facilitator@upbuild.com' }]
 
@@ -88,5 +88,27 @@ describe('createCalendarEvent', () => {
     const body = insert.mock.calls[0][0].requestBody
     expect(body.attendees).toEqual([{ email: 'gina@upbuild.com', displayName: 'Gina' }])
     expect(body.guestsCanSeeOtherGuests).toBe(false)
+  })
+})
+
+describe('rescheduleCalendarEvent', () => {
+  it('moves the existing invite and notifies everyone on it', async () => {
+    patch.mockResolvedValue({})
+    await rescheduleCalendarEvent('e1', new Date('2026-12-01T17:00:00Z'), new Date('2026-12-01T18:00:00Z'))
+    const [params] = patch.mock.calls[0]
+    expect(params.eventId).toBe('e1')
+    expect(params.sendUpdates).toBe('all')
+    expect(params.requestBody.start.dateTime).toBe('2026-12-01T17:00:00.000Z')
+    expect(params.requestBody.end.dateTime).toBe('2026-12-01T18:00:00.000Z')
+  })
+})
+
+describe('updateEventZoomLink', () => {
+  it('can update quietly without emailing guests', async () => {
+    patch.mockResolvedValue({})
+    await updateEventZoomLink('e1', 'https://zoom.us/j/1', { notify: false })
+    const [params] = patch.mock.calls[0]
+    expect(params.sendUpdates).toBe('none')
+    expect(params.requestBody.location).toBe('https://zoom.us/j/1')
   })
 })

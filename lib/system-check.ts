@@ -1,5 +1,7 @@
 import 'server-only'
 import { google } from 'googleapis'
+import { adminClient } from '@/lib/supabase/admin'
+import { getEventLocation } from '@/lib/calendar'
 
 export interface CheckResult {
   name: string
@@ -74,6 +76,42 @@ function checkSettings(): CheckResult {
   }
 }
 
+export interface InviteMissingZoom {
+  groupId: string
+  title: string
+  calendarEventId: string
+  zoomLink: string
+}
+
+// Upcoming sessions whose calendar invite doesn't carry the facilitator's current Zoom link
+// (e.g. invites created before Zoom links were added to invites)
+export async function findInvitesMissingZoom(): Promise<InviteMissingZoom[]> {
+  const { data: groups } = await adminClient
+    .from('group_sessions')
+    .select('id, title, calendar_event_id, users!facilitator_id(zoom_link)')
+    .in('status', ['published', 'full'])
+    .not('calendar_event_id', 'is', null)
+    .gte('start_time_utc', new Date().toISOString())
+
+  const missing: InviteMissingZoom[] = []
+  for (const g of groups ?? []) {
+    const zoomLink = (g.users as unknown as { zoom_link: string | null } | null)?.zoom_link
+    if (!zoomLink) continue
+    const location = await getEventLocation(g.calendar_event_id!)
+    if (location !== zoomLink) {
+      missing.push({ groupId: g.id, title: g.title, calendarEventId: g.calendar_event_id!, zoomLink })
+    }
+  }
+  return missing
+}
+
+async function checkInviteZoomLinks(): Promise<CheckResult> {
+  const base = { name: 'Zoom links on invites', usedFor: 'Upcoming session invites show the facilitator\'s Zoom link' }
+  const missing = await findInvitesMissingZoom()
+  if (missing.length === 0) return { ...base, ok: true, detail: 'Every upcoming invite has its Zoom link' }
+  return { ...base, ok: false, detail: `Missing on ${missing.length}: ${missing.map(m => m.title).join(', ')}` }
+}
+
 export async function runSystemChecks(): Promise<CheckResult[]> {
   const safely = (name: string, usedFor: string, check: () => Promise<CheckResult>) =>
     check().catch((err: unknown) => ({ name, usedFor, ok: false, detail: err instanceof Error ? err.message : 'check failed' }))
@@ -83,5 +121,6 @@ export async function runSystemChecks(): Promise<CheckResult[]> {
     safely('Resend', 'All app emails (reminders, requests, no-show checks)', checkResend),
     safely('Google Calendar', 'Creating and updating session invites', checkGoogleCalendar),
     Promise.resolve(checkSettings()),
+    safely('Zoom links on invites', 'Upcoming session invites show the facilitator\'s Zoom link', checkInviteZoomLinks),
   ])
 }
