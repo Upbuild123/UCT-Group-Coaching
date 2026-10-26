@@ -1,10 +1,11 @@
 import { requireAdmin } from '@/lib/auth'
 import { runSystemChecks } from '@/lib/system-check'
-import { addMissingZoomLinks } from './actions'
+import { addMissingZoomLinks, sendTestEmails } from './actions'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SystemCheckPage() {
+export default async function SystemCheckPage({ searchParams }: { searchParams: Promise<{ test?: string; to?: string }> }) {
+  const { test, to } = await searchParams
   await requireAdmin()
   const results = await runSystemChecks()
   const allOk = results.every(r => r.ok)
@@ -39,6 +40,18 @@ export default async function SystemCheckPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="card mt-6">
+        <p className="font-semibold text-slate-900">Test emails</p>
+        <p className="text-sm text-slate-600 mb-3">
+          Sends you a sample of the reminder students get the day before a session, and the attendance email facilitators get afterwards.
+        </p>
+        {test === 'sent' && <p className="text-sm text-emerald-700 mb-3">Sent to {to}. Check your inbox (and spam).</p>}
+        {test === 'failed' && <p className="text-sm text-rose-700 mb-3">Sending failed. Check the Resend row above.</p>}
+        <form action={sendTestEmails}>
+          <button type="submit" className="btn-secondary text-sm">Send me test emails</button>
+        </form>
       </div>
     </div>
   )

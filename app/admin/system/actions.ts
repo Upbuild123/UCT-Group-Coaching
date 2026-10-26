@@ -4,6 +4,10 @@ import { requireAdmin } from '@/lib/auth'
 import { findInvitesMissingZoom } from '@/lib/system-check'
 import { updateEventZoomLink } from '@/lib/calendar'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { formatInTimeZone } from 'date-fns-tz'
+import { adminClient } from '@/lib/supabase/admin'
+import { sendSessionReminderEmail, sendNoShowCheckEmail } from '@/lib/email'
 
 // Adds the facilitator's Zoom link to upcoming invites that lack it, without emailing guests
 export async function addMissingZoomLinks() {
@@ -16,4 +20,33 @@ export async function addMissingZoomLinks() {
     }
   }
   revalidatePath('/admin/system')
+}
+
+// Sends the admin a sample student reminder and a sample facilitator attendance email.
+// The attendance links are harmless: they only open the app.
+export async function sendTestEmails() {
+  const userId = await requireAdmin()
+  const { data: me } = await adminClient.from('users').select('email, timezone, zoom_link').eq('id', userId).single()
+  if (!me?.email) redirect('/admin/system?test=failed')
+
+  const startTimeFormatted = formatInTimeZone(new Date(Date.now() + 24 * 60 * 60 * 1000), me.timezone, 'MMM d, yyyy h:mm a zzz')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  try {
+    await sendSessionReminderEmail({
+      to: [me.email],
+      groupTitle: '[TEST] Group Coaching Round 1 Sample',
+      startTimeFormatted,
+      zoomLink: me.zoom_link ?? 'https://zoom.us/j/0000000000',
+    })
+    await sendNoShowCheckEmail({
+      facilitatorEmail: me.email,
+      groupTitle: '[TEST] Group Coaching Round 1 Sample',
+      startTimeFormatted,
+      students: ['Sample Student A', 'Sample Student B'].map(name => ({ name, noShowUrl: appUrl })),
+    })
+  } catch (err) {
+    console.error('Test emails failed', err)
+    redirect('/admin/system?test=failed')
+  }
+  redirect(`/admin/system?test=sent&to=${encodeURIComponent(me.email)}`)
 }
