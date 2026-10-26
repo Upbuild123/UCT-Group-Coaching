@@ -1,11 +1,12 @@
 import { requireAdmin } from '@/lib/auth'
 import { runSystemChecks } from '@/lib/system-check'
 import { addMissingZoomLinks, sendTestEmails } from './actions'
+import SubmitButton from './SubmitButton'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SystemCheckPage({ searchParams }: { searchParams: Promise<{ test?: string; to?: string }> }) {
-  const { test, to } = await searchParams
+export default async function SystemCheckPage({ searchParams }: { searchParams: Promise<{ test?: string; to?: string; zoom?: string; fixed?: string; errors?: string }> }) {
+  const { test, to, zoom, fixed, errors } = await searchParams
   await requireAdmin()
   const results = await runSystemChecks()
   const allOk = results.every(r => r.ok)
@@ -21,6 +22,13 @@ export default async function SystemCheckPage({ searchParams }: { searchParams: 
         {allOk ? 'Everything is working.' : 'Something needs attention. See the items marked below.'}
       </div>
 
+      {zoom === 'done' && (
+        <div className={`rounded-lg p-3 mb-6 text-sm ring-1 ${errors ? 'bg-amber-50 ring-amber-200 text-amber-800' : 'bg-emerald-50 ring-emerald-200 text-emerald-800'}`}>
+          <p>Added Zoom links to {fixed ?? 0} invite{fixed === '1' ? '' : 's'}.</p>
+          {errors && <p className="mt-1 whitespace-pre-line break-words">Could not update:{'\n'}{errors}</p>}
+        </div>
+      )}
+
       <div className="space-y-3">
         {results.map(r => (
           <div key={r.name} className="card flex items-start gap-3">
@@ -33,7 +41,7 @@ export default async function SystemCheckPage({ searchParams }: { searchParams: 
               <p className={`text-sm break-words ${r.ok ? 'text-slate-600' : 'text-rose-700'}`}>{r.detail}</p>
               {r.name === 'Zoom links on invites' && !r.ok && r.detail.startsWith('Missing') && (
                 <form action={addMissingZoomLinks} className="mt-3">
-                  <button type="submit" className="btn-primary text-xs px-3 py-1.5">Add Zoom links to invites</button>
+                  <SubmitButton label="Add Zoom links to invites" pendingLabel="Adding Zoom links..." className="btn-primary text-xs px-3 py-1.5" />
                   <p className="text-xs text-slate-500 mt-1">Updates the invites quietly; no emails are sent.</p>
                 </form>
               )}
@@ -50,7 +58,7 @@ export default async function SystemCheckPage({ searchParams }: { searchParams: 
         {test === 'sent' && <p className="text-sm text-emerald-700 mb-3">Sent to {to}. Check your inbox (and spam).</p>}
         {test === 'failed' && <p className="text-sm text-rose-700 mb-3">Sending failed. Check the Resend row above.</p>}
         <form action={sendTestEmails}>
-          <button type="submit" className="btn-secondary text-sm">Send me test emails</button>
+          <SubmitButton label="Send me test emails" pendingLabel="Sending..." className="btn-secondary text-sm" />
         </form>
       </div>
     </div>

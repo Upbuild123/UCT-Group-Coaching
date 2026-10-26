@@ -12,14 +12,32 @@ import { sendSessionReminderEmail, sendNoShowCheckEmail } from '@/lib/email'
 // Adds the facilitator's Zoom link to upcoming invites that lack it, without emailing guests
 export async function addMissingZoomLinks() {
   await requireAdmin()
-  for (const invite of await findInvitesMissingZoom()) {
-    try {
-      await updateEventZoomLink(invite.calendarEventId, invite.zoomLink, { notify: false })
-    } catch (err) {
-      console.error('Zoom link backfill failed for group', invite.groupId, err)
+  let fixed = 0
+  const failures: string[] = []
+  try {
+    for (const invite of await findInvitesMissingZoom()) {
+      try {
+        await updateEventZoomLink(invite.calendarEventId, invite.zoomLink, { notify: false })
+        fixed++
+      } catch (err) {
+        console.error('Zoom link backfill failed for group', invite.groupId, err)
+        failures.push(`${invite.title}: ${googleErrorMessage(err)}`)
+      }
     }
+  } catch (err) {
+    console.error('Zoom link backfill could not list invites', err)
+    failures.push(`Could not read the invites: ${googleErrorMessage(err)}`)
   }
   revalidatePath('/admin/system')
+  const params = new URLSearchParams({ zoom: 'done', fixed: String(fixed) })
+  if (failures.length) params.set('errors', failures.join('\n'))
+  redirect(`/admin/system?${params}`)
+}
+
+function googleErrorMessage(err: unknown): string {
+  const e = err as { response?: { data?: { error?: string | { message?: string } } }; message?: string }
+  const apiError = e.response?.data?.error
+  return (typeof apiError === 'string' ? apiError : apiError?.message) ?? e.message ?? 'unknown error'
 }
 
 // Sends the admin a sample student reminder and a sample facilitator attendance email.

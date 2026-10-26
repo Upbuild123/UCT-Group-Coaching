@@ -208,9 +208,9 @@ export async function sendSessionReminderEmail({
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `Reminder: ${groupTitle} starts in 24 hours`,
+    subject: `Reminder: ${groupTitle} is coming up`,
     html: `
-      <p><strong>${escHtml(groupTitle)}</strong> starts in about 24 hours.</p>
+      <p><strong>${escHtml(groupTitle)}</strong> is coming up.</p>
       <p><strong>When:</strong> ${escHtml(startTimeFormatted)}</p>
       ${zoomLink ? `<p><strong>Zoom link:</strong> <a href="${escHtml(zoomLink)}">${escHtml(zoomLink)}</a></p>` : ''}
     `,
