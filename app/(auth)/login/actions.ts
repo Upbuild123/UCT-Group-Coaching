@@ -35,6 +35,27 @@ export async function sendMagicLink(formData: FormData) {
   redirect(`/login?sent=${encodeURIComponent(email)}`)
 }
 
+// The login email also carries a one-time code ({{ .Token }} in the Supabase template). Typing it in
+// works on any device and can't be used up by a company's link scanner, unlike the link.
+export async function verifyLoginCode(formData: FormData) {
+  const email = (formData.get('email') as string).trim()
+  const token = (formData.get('code') as string).replace(/\s/g, '')
+  const back = `/login?sent=${encodeURIComponent(email)}`
+
+  if (!/^\d{6,10}$/.test(token)) {
+    redirect(`${back}&error=${encodeURIComponent('Enter the code from the email (numbers only).')}`)
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+
+  if (error) {
+    redirect(`${back}&error=${encodeURIComponent('That code is wrong or has expired. Check the newest email, or send a new one.')}`)
+  }
+
+  redirect('/')
+}
+
 export async function isAdminEmail(email: string): Promise<boolean> {
   const { data } = await adminClient
     .from('users')

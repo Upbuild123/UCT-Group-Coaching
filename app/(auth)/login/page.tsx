@@ -1,9 +1,19 @@
 'use client'
 
 import { Suspense, useState } from 'react'
+import { useFormStatus } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { login, sendMagicLink } from './actions'
+import { login, sendMagicLink, verifyLoginCode } from './actions'
+
+function CodeSubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button type="submit" disabled={pending} className="btn-primary w-full">
+      {pending ? 'Signing in...' : 'Sign in with code'}
+    </button>
+  )
+}
 
 function LoginForm() {
   const params = useSearchParams()
@@ -18,6 +28,14 @@ function LoginForm() {
       <div className="text-center space-y-3">
         <p className="text-slate-700 font-medium">Check your email</p>
         <p className="text-sm text-slate-500">We sent a login link to <strong>{sent}</strong>. Click it to sign in.</p>
+        <form action={verifyLoginCode} className="space-y-3 pt-2 text-left">
+          <input type="hidden" name="email" value={sent} />
+          <label htmlFor="code" className="block text-sm font-medium text-slate-700">Or type the code from the email</label>
+          <input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" required
+            placeholder="123456" className="input text-center text-lg tracking-widest" />
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+          <CodeSubmitButton />
+        </form>
         <button onClick={() => window.location.href = '/login'} className="text-sm text-brand-600 hover:underline">
           Use a different email
         </button>
