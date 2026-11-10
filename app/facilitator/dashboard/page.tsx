@@ -1,14 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
+import { adminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import { formatInTimeZone } from 'date-fns-tz'
 
 export default async function FacilitatorDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  const { data: groups } = await supabase
+  // Facilitators can't read student profiles under RLS, so rosters load with the service role,
+  // limited to this facilitator's own groups (middleware already restricts /facilitator by role)
+  const { data: groups } = await adminClient
     .from('group_sessions')
     .select(`id, title, start_time_utc, original_timezone, capacity, status, rounds(title), signups(id, status, users!student_id(name, email))`)
-    .eq('facilitator_id', user!.id)
+    .eq('facilitator_id', user.id)
     .neq('status', 'canceled')
     .order('start_time_utc')
 
