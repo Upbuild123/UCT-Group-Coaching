@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     .gte('start_time_utc', windowStart)
     .lte('start_time_utc', windowEnd)
 
+  const failed: string[] = []
   for (const group of groups ?? []) {
     const facilitator = group.users as any
     const zoomLink = facilitator?.zoom_link ?? null
@@ -38,13 +39,20 @@ export async function GET(request: Request) {
       if (signup.status === 'confirmed' && signup.users) recipients.push(signup.users)
     }
 
+    // One bad address shouldn't stop the rest. The session is still marked as reminded: by
+    // tomorrow's run it will have started, so there is no later chance to retry.
     for (const recipient of recipients) {
-      await sendSessionReminderEmail({
-        to: [recipient.email],
-        groupTitle: group.title,
-        startTimeFormatted: formatInTimeZone(new Date(group.start_time_utc), recipient.timezone, 'MMM d, yyyy h:mm a zzz'),
-        zoomLink,
-      })
+      try {
+        await sendSessionReminderEmail({
+          to: [recipient.email],
+          groupTitle: group.title,
+          startTimeFormatted: formatInTimeZone(new Date(group.start_time_utc), recipient.timezone, 'MMM d, yyyy h:mm a zzz'),
+          zoomLink,
+        })
+      } catch (err) {
+        console.error(`Reminder for ${group.title} failed:`, err)
+        failed.push(`${group.title}: ${recipient.email}`)
+      }
     }
 
     await adminClient
@@ -53,5 +61,5 @@ export async function GET(request: Request) {
       .eq('id', group.id)
   }
 
-  return NextResponse.json({ processed: groups?.length ?? 0 })
+  return NextResponse.json({ processed: groups?.length ?? 0, failed })
 }

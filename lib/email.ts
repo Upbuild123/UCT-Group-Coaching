@@ -5,6 +5,13 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = 'Upbuild Coaching <noreply@upbuild.com>'
 const SUPPORT_EMAIL = 'michael@upbuild.com'
 
+// Resend reports failures (bad key, unverified domain, rejected address) in the result instead
+// of throwing, so check it; otherwise a failed email looks sent
+async function send(email: Parameters<typeof resend.emails.send>[0]) {
+  const { error } = await resend.emails.send(email)
+  if (error) throw new Error(`Email to ${[email.to].flat().join(', ')} failed: ${error.message}`)
+}
+
 function escHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -27,7 +34,7 @@ export async function sendSignupConfirmationEmail({
   startTimeFormatted: string
   facilitatorName: string
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: studentEmail,
     subject: `Confirmed: ${groupTitle}`,
@@ -55,7 +62,7 @@ export async function sendCancellationNotificationEmail({
   const recipients = [facilitatorEmail, ...studentEmails].filter(Boolean)
   if (recipients.length === 0) return
 
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: recipients,
     subject: `Canceled: ${groupTitle}`,
@@ -86,7 +93,7 @@ export async function sendFullGroupRequestNotification({
   reason: string | null
   adminRequestUrl: string
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: adminEmail,
     subject: `Full group request: ${studentName} → ${requestedGroupTitle}`,
@@ -129,7 +136,7 @@ export async function sendFacilitatorRequestNotification({
   approveUrl: string
   rejectUrl: string
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: facilitatorEmail,
     subject,
@@ -162,7 +169,7 @@ export async function sendFullGroupApprovalEmail({
   requestedGroupFormatted: string
   facilitatorName: string
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: studentEmail,
     subject: `Added: ${requestedGroupTitle}`,
@@ -182,7 +189,7 @@ export async function sendFullGroupRejectionEmail({
   studentName: string
   requestedGroupTitle: string
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: studentEmail,
     subject: 'Full group request update',
@@ -205,7 +212,7 @@ export async function sendSessionReminderEmail({
 }) {
   if (to.length === 0) return
 
-  await resend.emails.send({
+  await send({
     from: FROM,
     to,
     subject: `Reminder: ${groupTitle} is coming up`,
@@ -228,7 +235,7 @@ export async function sendNoShowCheckEmail({
   startTimeFormatted: string
   students: { name: string; noShowUrl: string }[]
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: facilitatorEmail,
     subject: `Attendance: ${groupTitle}`,
@@ -255,7 +262,7 @@ export async function sendFacilitatorResolutionEmail({
   requestedGroupTitle: string
   decision: 'approved' | 'rejected'
 }) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: facilitatorEmail,
     subject: 'Full group request resolved',

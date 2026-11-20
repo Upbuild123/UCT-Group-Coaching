@@ -14,7 +14,8 @@ export async function GET(request: Request) {
   if (!baseUrl) return NextResponse.json({ error: 'App URL not configured' }, { status: 500 })
 
   const now = new Date()
-  const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+  // Looks back 3 days so a session whose email failed is retried on the next two daily runs
+  const windowStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
 
   const { data: groups } = await adminClient
     .from('group_sessions')
@@ -28,12 +29,14 @@ export async function GET(request: Request) {
     .gte('end_time_utc', windowStart)
     .lte('end_time_utc', now.toISOString())
 
+  const failed: string[] = []
   for (const group of groups ?? []) {
     const facilitator = group.users as any
     const confirmedSignups = (group.signups ?? []).filter((s: any) => s.status === 'confirmed') as any[]
 
     if (facilitator?.email && confirmedSignups.length > 0) {
-      await sendNoShowCheckEmail({
+      try {
+        await sendNoShowCheckEmail({
         facilitatorEmail: facilitator.email,
         groupTitle: group.title,
         startTimeFormatted: formatInTimeZone(new Date(group.start_time_utc), group.original_timezone, 'MMM d, yyyy h:mm a zzz'),
@@ -41,7 +44,13 @@ export async function GET(request: Request) {
           name: s.users.name,
           noShowUrl: `${baseUrl}/api/no-show/${createNoShowToken(s.id)}`,
         })),
-      })
+        })
+      } catch (err) {
+        // Leave it unmarked so tomorrow's run tries again
+        console.error(`Attendance email for ${group.title} failed:`, err)
+        failed.push(group.title)
+        continue
+      }
     }
 
     await adminClient
@@ -50,5 +59,5 @@ export async function GET(request: Request) {
       .eq('id', group.id)
   }
 
-  return NextResponse.json({ processed: groups?.length ?? 0 })
+  return NextResponse.json({ processed: groups?.length ?? 0, failed })
 }
